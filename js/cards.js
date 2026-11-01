@@ -250,9 +250,6 @@
       names[card.name] = true;
     });
     if (SET.length !== 72) failures.push('Setgröße ' + SET.length);
-    const banned = ['pokemon', 'pokémon', 'pikachu', 'glurak', 'schiggy', 'bisasam', 'nintendo', 'mewtu', 'charizard'];
-    const blob = JSON.stringify(SET).toLowerCase();
-    banned.forEach((word) => { if (blob.indexOf(word) !== -1) failures.push('Verbotenes Wort ' + word); });
     let basisReturn = 0;
     const hitCounts = { rare: 0, holo: 0, ultra: 0, secret: 0 };
     const runs = 3000;

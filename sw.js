@@ -1,4 +1,4 @@
-const CACHE = 'lucky-casino-v1';
+const CACHE = 'lucky-casino-v2';
 const ASSETS = [
   '/',
   '/index.html',
@@ -10,6 +10,7 @@ const ASSETS = [
   '/js/roulette.js',
   '/js/blackjack.js',
   '/js/wheel.js',
+  '/js/cards.js',
   '/js/app.js',
   '/manifest.webmanifest',
   '/icons/icon-192.png',

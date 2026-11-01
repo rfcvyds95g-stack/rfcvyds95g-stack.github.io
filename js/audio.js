@@ -113,6 +113,14 @@
     card() {
       noise(0.05, 0.06);
       tone(240, 0.06, 'triangle', 0.04);
+    },
+    packTear() {
+      noise(0.18, 0.09);
+      tone(180, 0.22, 'sawtooth', 0.04, 0, 90);
+      tone(520, 0.08, 'square', 0.03, 0.05);
+    },
+    holo() {
+      [880, 1175, 1568].forEach((freq, index) => tone(freq, 0.18, 'sine', 0.05, index * 0.07));
     }
   };
 

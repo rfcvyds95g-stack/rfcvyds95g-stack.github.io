@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Lucky Slots">
 <meta name="description" content="Spielgeld-Casino nur zur Unterhaltung. Credits haben keinen Geldwert.">
-<meta name="app-version" content="lucky-casino-2">
+<meta name="app-version" content="lucky-casino-3">
 <title>Lucky Slots Casino – Spielcredits</title>
 <link rel="icon" href="icons/favicon-32.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -35,7 +35,7 @@
   <main id="view-lobby" class="view">
     <p class="eyebrow">Spielhalle</p>
     <h1>Wähle deinen Tisch</h1>
-    <p class="lead">Sechs Slots und drei Tischspiele. Ein gemeinsames Credit-Konto, nur Spielgeld.</p>
+    <p class="lead">Sechs Slots, drei Tischspiele und ein Kartenspiel. Ein gemeinsames Credit-Konto, nur Spielgeld.</p>
     <div class="bonus-row">
       <p id="bonus-status" class="muted"></p>
       <button type="button" id="bonus-btn" class="primary hidden">Bonus abholen</button>
@@ -45,6 +45,71 @@
     <div class="grid" id="slot-cards"></div>
     <h2 class="section">Tischspiele</h2>
     <div class="grid" id="table-cards"></div>
+    <h2 class="section">Karten</h2>
+    <div class="grid" id="pack-cards"></div>
+  </main>
+
+  <main id="view-cards" class="view hidden">
+    <button type="button" class="back" id="back-cards">← Lobby</button>
+    <h1>Karten</h1>
+    <p class="lead">Originale Monster, keine fremden Marken. Fünf Karten pro Pack, eine davon mindestens Selten.</p>
+    <p id="cards-progress" class="muted">0 / 72</p>
+    <div class="card-tabs">
+      <button type="button" id="tab-shop" class="active">Packs</button>
+      <button type="button" id="tab-binder">Sammlung</button>
+    </div>
+    <section id="cards-shop">
+      <article class="panel pack-offer">
+        <h2>Basis-Pack</h2>
+        <p>100 Credits. Fünf Karten, davon eine mindestens Selten.</p>
+        <button type="button" id="buy-basis" class="primary">Kaufen</button>
+      </article>
+      <article class="panel pack-offer">
+        <h2>Elementar-Pack</h2>
+        <p>220 Credits. Mehr Karten des gewählten Elements und eine bessere Selten-Chance.</p>
+        <div class="element-types" id="element-types"></div>
+        <button type="button" id="buy-element" class="primary">Elementar-Pack kaufen</button>
+      </article>
+      <article class="panel pack-offer">
+        <h2>Premium-Pack</h2>
+        <p>480 Credits. Höhere Chance auf Holo, Ultra und Geheim.</p>
+        <button type="button" id="buy-premium" class="primary">Kaufen</button>
+      </article>
+    </section>
+    <section id="cards-open" class="hidden">
+      <h2 id="open-title">Pack</h2>
+      <button type="button" id="pack-visual" class="booster">Pack aufreißen</button>
+      <div id="pull-row" class="pull-row"></div>
+      <div class="secondary">
+        <button type="button" id="pack-tear" class="primary">Aufreißen</button>
+        <button type="button" id="reveal-all" class="hidden">Alle aufdecken</button>
+        <button type="button" id="open-done" class="hidden">Zur Sammlung</button>
+      </div>
+    </section>
+    <section id="cards-binder" class="hidden">
+      <p id="binder-progress" class="muted"></p>
+      <div class="filters">
+        <label>Element <select id="filter-type"><option value="">Alle</option></select></label>
+        <label>Seltenheit <select id="filter-rarity"><option value="">Alle</option></select></label>
+        <label>Sortierung
+          <select id="filter-sort">
+            <option value="number">Nummer</option>
+            <option value="name">Name</option>
+            <option value="rarity">Seltenheit</option>
+            <option value="owned">Besitz</option>
+          </select>
+        </label>
+        <label class="check"><input type="checkbox" id="filter-missing"> Nur fehlende</label>
+        <label class="check"><input type="checkbox" id="filter-dupes"> Nur Doppelte</label>
+      </div>
+      <button type="button" id="sell-dupes">Duplikate verkaufen</button>
+      <div id="binder-grid" class="binder-grid"></div>
+    </section>
+    <div id="card-detail" class="card-detail hidden">
+      <button type="button" id="detail-close" class="ghost">Schließen</button>
+      <div id="detail-card"></div>
+      <p id="detail-count"></p>
+    </div>
   </main>
 
   <main id="view-slot" class="view hidden">
@@ -183,6 +248,7 @@
 <p class="legal" id="legal">Reines Unterhaltungsspiel. Credits haben keinen Geldwert und können weder gekauft noch ausgezahlt werden.</p>
 <nav class="bottom-nav">
   <button type="button" class="nav-btn active" data-nav="lobby" id="nav-lobby">Lobby</button>
+  <button type="button" class="nav-btn" data-nav="cards" id="nav-cards">Karten</button>
   <button type="button" class="nav-btn" data-nav="achievements" id="nav-achievements">Erfolge</button>
   <button type="button" class="nav-btn" data-nav="stats" id="nav-stats">Statistik</button>
   <button type="button" class="nav-btn" data-nav="settings" id="nav-settings">Einstellungen</button>
@@ -200,6 +266,7 @@
 <script defer src="js/roulette.js"></script>
 <script defer src="js/blackjack.js"></script>
 <script defer src="js/wheel.js"></script>
+<script defer src="js/cards.js"></script>
 <script defer src="js/app.js"></script>
 </body>
 </html>

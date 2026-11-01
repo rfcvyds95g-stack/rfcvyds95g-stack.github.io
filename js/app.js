@@ -19,7 +19,8 @@
     return (C.slots && C.slots.isBusy && C.slots.isBusy())
       || (C.roulette && C.roulette.isBusy && C.roulette.isBusy())
       || (C.blackjack && C.blackjack.isBusy && C.blackjack.isBusy())
-      || (C.wheel && C.wheel.isBusy && C.wheel.isBusy());
+      || (C.wheel && C.wheel.isBusy && C.wheel.isBusy())
+      || (C.cards && C.cards.isBusy && C.cards.isBusy());
   }
   C.isAnyBusy = busy;
 
@@ -92,6 +93,7 @@
     if (id === 'roulette') return 'Roulette';
     if (id === 'blackjack') return 'Blackjack';
     if (id === 'wheel') return 'Glücksrad';
+    if (id === 'cards') return 'Karten';
     return id || '–';
   }
 
@@ -104,12 +106,13 @@
     if (current === 'roulette' && view !== 'roulette' && !C.roulette.close()) return;
     if (current === 'blackjack' && view !== 'blackjack' && !C.blackjack.close()) return;
     if (current === 'wheel' && view !== 'wheel' && !C.wheel.close()) return;
+    if (current === 'cards' && view !== 'cards' && !C.cards.close()) return;
     current = view;
     document.querySelectorAll('.view').forEach((el) => {
       el.classList.toggle('hidden', el.id !== 'view-' + view);
     });
     document.querySelectorAll('.nav-btn').forEach((button) => {
-      const key = ['achievements', 'stats', 'settings'].indexOf(view) === -1 ? 'lobby' : view;
+      const key = ['achievements', 'stats', 'settings', 'cards'].indexOf(view) === -1 ? 'lobby' : view;
       button.classList.toggle('active', button.dataset.nav === key);
     });
     if (view === 'achievements') renderAchievements();
@@ -118,6 +121,7 @@
     if (view === 'roulette') C.roulette.onShow();
     if (view === 'blackjack') C.blackjack.onShow();
     if (view === 'wheel') C.wheel.onShow();
+    if (view === 'cards' && C.cards.onShow) C.cards.onShow();
     if (view === 'lobby') renderLobbyStatus();
     window.scrollTo(0, 0);
   }
@@ -144,6 +148,7 @@
     if (current === 'roulette' && C.roulette.refresh) C.roulette.refresh();
     if (current === 'blackjack' && C.blackjack.refresh) C.blackjack.refresh();
     if (current === 'wheel' && C.wheel.refresh) C.wheel.refresh();
+    if (current === 'cards' && C.cards.refresh) C.cards.refresh();
     if (current === 'lobby') renderLobbyStatus();
     if (current === 'stats') renderStats();
     if (current === 'achievements') renderAchievements();
@@ -194,6 +199,9 @@
     [C.roulette.meta, C.blackjack.meta, C.wheel.meta].forEach((game) => {
       tables.appendChild(makeCard(game.id, game, () => openTable(game.id)));
     });
+    const packs = $('pack-cards');
+    packs.replaceChildren();
+    packs.appendChild(makeCard('cards', C.cards.meta, () => show('cards')));
   }
 
   function openSlot(id) {
@@ -284,6 +292,7 @@
     const net = stats.payout - stats.wagered;
     grid.append(
       statBox('Slot-Drehungen', C.state.fmt(snap.counters.slotSpins || 0)),
+      statBox('Packs', C.state.fmt(snap.counters.packs || 0)),
       statBox('Runden', C.state.fmt(stats.rounds || 0)),
       statBox('Gesamteinsatz', C.state.fmt(stats.wagered || 0)),
       statBox('Auszahlungen', C.state.fmt(stats.payout || 0)),
@@ -367,7 +376,7 @@
       return;
     }
     const text = document.createElement('p');
-    text.textContent = 'Credits, Level, Erfolge, Serie und Statistik werden gelöscht. Dein Guthaben wird auf 1.000 Credits gesetzt.';
+    text.textContent = 'Credits, Level, Erfolge, Serie, Statistik und die Kartensammlung werden gelöscht. Dein Guthaben wird auf 1.000 Credits gesetzt.';
     openModal('Fortschritt zurücksetzen?', [text], [
       { label: 'Abbrechen', onClick: () => { modalOnClose = null; closeModal(); } },
       {
@@ -401,6 +410,7 @@
     C.roulette.init();
     C.blackjack.init();
     C.wheel.init();
+    C.cards.init();
     renderLobby();
     renderChrome();
     show('lobby');
@@ -415,6 +425,7 @@
     $('back-roulette').addEventListener('click', () => show('lobby'));
     $('back-bj').addEventListener('click', () => show('lobby'));
     $('back-wheel').addEventListener('click', () => show('lobby'));
+    $('back-cards').addEventListener('click', () => show('lobby'));
     $('set-mute').addEventListener('click', toggleMute);
     $('set-refill').addEventListener('click', () => {
       if (C.state.refill()) toast('Credits auf 1.000 aufgefüllt.');

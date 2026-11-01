@@ -26,7 +26,12 @@
     { id: 'streak_3', name: 'Serie', desc: 'Hole den Tagesbonus an 3 Tagen in Folge ab.', icon: '📅', goal: 3 },
     { id: 'level_5', name: 'Aufsteiger', desc: 'Erreiche Level 5.', icon: '⭐', goal: 5 },
     { id: 'natural', name: 'Blackjack', desc: 'Erziele einen Blackjack.', icon: '🂡' },
-    { id: 'straight', name: 'Volltreffer', desc: 'Triff beim Roulette eine volle Zahl.', icon: '🟢' }
+    { id: 'straight', name: 'Volltreffer', desc: 'Triff beim Roulette eine volle Zahl.', icon: '🟢' },
+    { id: 'first_holo', name: 'Erstes Holo', desc: 'Ziehe eine Holo-Karte oder besser.', icon: '🌈' },
+    { id: 'set_25', name: 'Sammler', desc: 'Besitze 25 % des Kartensets.', icon: '📚', goal: 18 },
+    { id: 'set_50', name: 'Archivar', desc: 'Besitze 50 % des Kartensets.', icon: '🗃️', goal: 36 },
+    { id: 'set_100', name: 'Komplett', desc: 'Vervollständige das gesamte Kartenset.', icon: '🏆', goal: 72 },
+    { id: 'first_secret', name: 'Geheimfund', desc: 'Ziehe eine Geheim-Seltene Karte.', icon: '🌌' }
   ];
 
   let credits = START;
@@ -63,8 +68,13 @@
         naturals: 0,
         straights: 0,
         firstWin: 0,
+        packs: 0,
+        uniqueCards: 0,
+        holos: 0,
+        secrets: 0,
         played: {}
       },
+      cards: {},
       stats: {
         rounds: 0,
         wagered: 0,
@@ -147,6 +157,7 @@
     meta.stats.games = (raw.stats && raw.stats.games) || {};
     meta.ach = raw.ach || {};
     meta.pendingKept = raw.pendingKept || null;
+    meta.cards = (raw.cards && typeof raw.cards === 'object') ? raw.cards : {};
     const maxBet = C.BETS.length - 1;
     meta.betIdx = Math.max(0, Math.min(maxBet, meta.betIdx | 0));
   }
@@ -155,6 +166,7 @@
     if (id === 'spins_100' || id === 'spins_1000') return meta.counters.slotSpins || 0;
     if (id === 'level_5') return levelFromXp(meta.xp);
     if (id === 'streak_3') return meta.streak || 0;
+    if (id === 'set_25' || id === 'set_50' || id === 'set_100') return meta.counters.uniqueCards || 0;
     return null;
   }
 
@@ -171,6 +183,11 @@
       case 'level_5': return levelFromXp(meta.xp) >= 5;
       case 'natural': return c.naturals > 0;
       case 'straight': return c.straights > 0;
+      case 'first_holo': return c.holos > 0;
+      case 'set_25': return (c.uniqueCards || 0) >= 18;
+      case 'set_50': return (c.uniqueCards || 0) >= 36;
+      case 'set_100': return (c.uniqueCards || 0) >= 72;
+      case 'first_secret': return c.secrets > 0;
       default:
         if (id.indexOf('played_') === 0) return (c.played[id.slice(7)] || 0) > 0;
         return false;
@@ -390,6 +407,7 @@
       if (opts.triggerFS) meta.counters.freespinTriggers += 1;
       if (opts.natural) meta.counters.naturals += 1;
       if (opts.straight) meta.counters.straights += 1;
+      if (opts.pack) meta.counters.packs = (meta.counters.packs || 0) + 1;
       if (opts.keepPending) {
         meta.pendingKept = { game: game, amount: payout, wagered: wagered };
       } else {
@@ -399,6 +417,31 @@
       }
       const xpRes = applyXp(wagered);
       flush(xpRes);
+    },
+    cardBag() {
+      return Object.assign({}, (meta && meta.cards) || {});
+    },
+    saveCardBag(bag) {
+      meta.cards = bag || {};
+      saveMeta();
+      emit();
+    },
+    setCollectionCounters(counters) {
+      meta.counters.uniqueCards = counters.unique || 0;
+      meta.counters.holos = counters.holos || 0;
+      meta.counters.secrets = counters.secrets || 0;
+      saveMeta();
+      reconcile();
+      emit();
+    },
+    noteSale(amount) {
+      const gain = Math.max(0, Math.round(amount || 0));
+      if (!gain) return 0;
+      credits += gain;
+      meta.stats.payout += gain;
+      gameStats('cards').payout += gain;
+      flush(null);
+      return gain;
     },
     canRefill() {
       if (!meta || credits >= 100 || meta.pendingKept) return false;

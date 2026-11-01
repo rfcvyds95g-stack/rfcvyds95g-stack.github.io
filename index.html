@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lucky Slots Casino – Spielcredits</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh;color:#fff;background:#0f0a1e;transition:background .4s}
+header{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;background:#0008;position:sticky;top:0;z-index:5;backdrop-filter:blur(6px)}
+.logo{font-size:1.4rem;font-weight:800;background:linear-gradient(90deg,#fde047,#f97316,#ec4899);-webkit-background-clip:text;color:transparent;cursor:pointer}
+.wallet{background:#000a;padding:8px 14px;border-radius:10px;border:1px solid #fbbf2466;font-weight:700}
+.wallet span{color:#fde047}
+main{display:flex;flex-direction:column;align-items:center;padding:24px 16px}
+.lobby-title{font-size:1.8rem;margin-bottom:6px}
+.sub{opacity:.7;margin-bottom:24px;text-align:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;width:100%;max-width:1100px}
+.card{border-radius:18px;padding:22px;cursor:pointer;border:2px solid #ffffff22;transition:transform .15s,box-shadow .15s;text-align:center}
+.card:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 10px 30px #0008}
+.card .icons{font-size:2.6rem;margin-bottom:10px}
+.card h3{font-size:1.25rem;margin-bottom:4px}
+.card p{font-size:.82rem;opacity:.85}
+.card .tag{display:inline-block;margin-top:10px;font-size:.72rem;background:#0006;padding:4px 10px;border-radius:20px}
+.machine{border:4px solid var(--accent);border-radius:24px;padding:22px;box-shadow:0 0 40px var(--glow);width:100%;max-width:620px;background:var(--panel)}
+.gtitle{text-align:center;font-size:1.8rem;font-weight:800;margin-bottom:4px}
+.gdesc{text-align:center;opacity:.8;font-size:.85rem;margin-bottom:14px}
+.reels{display:flex;gap:8px;justify-content:center;background:#111;padding:12px;border-radius:14px;border:3px inset var(--accent);position:relative}
+.col{display:flex;flex-direction:column;gap:6px;flex:1;max-width:110px}
+.cell{aspect-ratio:1/1;background:linear-gradient(180deg,#e5e5e5,#fff 40%,#fff 60%,#d4d4d4);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:clamp(1.6rem,7vw,3.4rem);transition:box-shadow .2s}
+.cell.hit{box-shadow:0 0 0 4px #4ade80,0 0 18px #4ade80;animation:pop .5s ease-in-out 2}
+@keyframes pop{50%{transform:scale(1.08)}}
+.col.spin .cell{animation:blur .1s linear infinite}
+@keyframes blur{0%{transform:translateY(-5px);filter:blur(2px)}100%{transform:translateY(5px);filter:blur(2px)}}
+.info{display:flex;justify-content:space-between;margin:12px 0 0;font-size:.85rem;opacity:.85}
+.msg{min-height:32px;margin:10px 0;text-align:center;font-size:1.15rem;font-weight:700}
+.win{color:#4ade80;animation:pulse .6s ease-in-out 3}
+@keyframes pulse{50%{transform:scale(1.12)}}
+.controls{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+button{font:inherit;cursor:pointer;border:none;border-radius:12px;font-weight:700}
+.bet{display:flex;align-items:center;gap:8px;background:#000a;padding:6px 10px;border-radius:12px}
+.bet button{background:#1f2937;color:#fff;width:38px;height:38px;font-size:1.3rem}
+#spin{background:linear-gradient(180deg,#facc15,#ea580c);color:#1c1917;padding:14px 36px;font-size:1.25rem;box-shadow:0 4px 0 #9a3412}
+#spin:active{transform:translateY(3px);box-shadow:0 1px 0 #9a3412}
+#spin:disabled{opacity:.5;cursor:not-allowed}
+.secondary{margin-top:12px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.secondary button{background:#ffffff1a;color:#fff;padding:8px 14px;font-size:.85rem}
+table{margin-top:20px;width:100%;max-width:620px;border-collapse:collapse;background:#0006;border-radius:12px;overflow:hidden;font-size:.9rem}
+th,td{padding:6px 10px;text-align:center}
+th{background:#ffffff22}
+tr:nth-child(even) td{background:#ffffff08}
+.note{margin-top:16px;font-size:.75rem;opacity:.55;text-align:center;max-width:620px}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo" id="home">🎰 LUCKY SLOTS</div>
+  <div class="wallet">Credits: <span id="credits">0</span></div>
+</header>
+
+<main id="lobby">
+  <div class="lobby-title">Wähle dein Spiel</div>
+  <div class="sub">5 Slots, ein gemeinsames Credit-Konto. Nur Spielcredits, kein Echtgeld.</div>
+  <div class="grid" id="cards"></div>
+  <div class="secondary" style="margin-top:24px"><button id="refill1">Credits auffüllen</button></div>
+  <div class="note">Reines Unterhaltungsspiel. Credits haben keinen Geldwert und können weder gekauft noch ausgezahlt werden. Dein Stand wird lokal im Browser gespeichert.</div>
+</main>
+
+<main id="game" class="hidden">
+  <div class="machine">
+    <div class="gtitle" id="gtitle"></div>
+    <div class="gdesc" id="gdesc"></div>
+    <div class="reels" id="reels"></div>
+    <div class="info"><div id="linesinfo"></div><div>Letzter Gewinn: <b id="lastwin">0</b></div></div>
+    <div class="msg" id="msg">Viel Glück!</div>
+    <div class="controls">
+      <div class="bet"><button id="minus">−</button><div>Einsatz: <b id="bet">10</b></div><button id="plus">+</button></div>
+      <button id="spin">DREHEN</button>
+    </div>
+    <div class="secondary">
+      <button id="back">← Zur Spielauswahl</button>
+      <button id="auto">Auto-Spin: Aus</button>
+      <button id="refill2">Credits auffüllen</button>
+    </div>
+  </div>
+  <table id="paytable"></table>
+</main>
+
+<script>
+const GAMES={
+  classic:{
+    name:'Lucky Classic',icons:'🍒🔔7️⃣',desc:'Der Klassiker: 3 Walzen, 1 Gewinnlinie.',tag:'3 Walzen · 1 Linie',
+    bg:'radial-gradient(circle at top,#7f1d1d,#1c0505 70%)',panel:'linear-gradient(180deg,#7c2d12,#450a0a)',accent:'#fbbf24',glow:'rgba(251,191,36,.4)',card:'linear-gradient(135deg,#b91c1c,#7c2d12)',
+    reels:3,rows:1,lines:[[0,0,0]],
+    symbols:[{s:'🍒',w:30,pay:{1:1,2:3,3:5}},{s:'🍋',w:25,pay:{3:8}},{s:'🍉',w:20,pay:{3:10}},{s:'🔔',w:12,pay:{3:20}},{s:'⭐',w:7,pay:{3:40}},{s:'💎',w:4,pay:{3:80}},{s:'7️⃣',w:2,pay:{3:150}}]
+  },
+  ocean:{
+    name:'Ozean-Schatz',icons:'🐠🦈💰',desc:'5 Walzen unter Wasser. 🌊 ist Wild und ersetzt jedes Symbol.',tag:'5 Walzen · Wild',
+    bg:'radial-gradient(circle at top,#0e7490,#041e2b 70%)',panel:'linear-gradient(180deg,#155e75,#082f49)',accent:'#22d3ee',glow:'rgba(34,211,238,.4)',card:'linear-gradient(135deg,#0891b2,#1e3a8a)',
+    reels:5,rows:1,lines:[[0,0,0,0,0]],wild:'🌊',
+    symbols:[{s:'🐚',w:28,pay:{3:3,4:8,5:20}},{s:'🐠',w:24,pay:{3:4,4:10,5:30}},{s:'🐙',w:18,pay:{3:6,4:15,5:50}},{s:'🦈',w:12,pay:{3:10,4:30,5:100}},{s:'🧜',w:7,pay:{3:20,4:60,5:250}},{s:'💰',w:4,pay:{3:40,4:150,5:1000}},{s:'🌊',w:9,pay:{3:50,4:200,5:2000}}]
+  },
+  galaxy:{
+    name:'Galaxy Spins',icons:'🚀👽🪐',desc:'3×3 Raster mit 5 Gewinnlinien. 🌟 ist Wild.',tag:'3×3 · 5 Linien',
+    bg:'radial-gradient(circle at top,#4c1d95,#05020f 70%)',panel:'linear-gradient(180deg,#312e81,#1e1b4b)',accent:'#a78bfa',glow:'rgba(167,139,250,.45)',card:'linear-gradient(135deg,#6d28d9,#111827)',
+    reels:3,rows:3,lines:[[1,1,1],[0,0,0],[2,2,2],[0,1,2],[2,1,0]],wild:'🌟',
+    symbols:[{s:'🪐',w:30,pay:{3:10}},{s:'🌙',w:25,pay:{3:15}},{s:'☄️',w:18,pay:{3:25}},{s:'👽',w:12,pay:{3:50}},{s:'🚀',w:7,pay:{3:100}},{s:'🌟',w:5,pay:{3:300}}]
+  },
+  pharaoh:{
+    name:'Pharaos Gold',icons:'👑🏺🐍',desc:'5×3 Walzen, 5 Gewinnlinien. 👑 ist Wild.',tag:'5×3 · 5 Linien · Wild',
+    bg:'radial-gradient(circle at top,#a16207,#1c1204 70%)',panel:'linear-gradient(180deg,#854d0e,#422006)',accent:'#facc15',glow:'rgba(250,204,21,.45)',card:'linear-gradient(135deg,#ca8a04,#78350f)',
+    reels:5,rows:3,lines:[[1,1,1,1,1],[0,0,0,0,0],[2,2,2,2,2],[0,1,2,1,0],[2,1,0,1,2]],wild:'👑',
+    symbols:[{s:'🏺',w:28,pay:{3:5,4:15,5:40}},{s:'🐍',w:24,pay:{3:8,4:20,5:60}},{s:'🪲',w:18,pay:{3:10,4:30,5:100}},{s:'🐫',w:12,pay:{3:15,4:50,5:200}},{s:'👁️',w:7,pay:{3:30,4:100,5:500}},{s:'👑',w:5,pay:{3:50,4:250,5:2500}}]
+  },
+  candy:{
+    name:'Candy Rausch',icons:'🍭🧁🍩',desc:'4 Walzen voller Süßes. Jeder Gewinn bekommt einen zufälligen Multiplikator bis ×5. 🌈 ist Wild.',tag:'4 Walzen · Multiplikator',
+    bg:'radial-gradient(circle at top,#db2777,#2a0516 70%)',panel:'linear-gradient(180deg,#be185d,#500724)',accent:'#f9a8d4',glow:'rgba(249,168,212,.5)',card:'linear-gradient(135deg,#ec4899,#8b5cf6)',
+    reels:4,rows:1,lines:[[0,0,0,0]],wild:'🌈',multiplier:[1,1,1,2,2,3,5],
+    symbols:[{s:'🍬',w:28,pay:{3:2,4:6}},{s:'🍭',w:24,pay:{3:3,4:10}},{s:'🍩',w:18,pay:{3:5,4:15}},{s:'🧁',w:12,pay:{3:8,4:30}},{s:'🍫',w:7,pay:{3:15,4:60}},{s:'🎂',w:4,pay:{3:30,4:150}},{s:'🌈',w:6,pay:{3:40,4:300}}]
+  }
+};
+const BETS=[5,10,25,50,100,250,500];
+const START=1000;
+let credits=+localStorage.getItem('slots_credits')||START;
+let betIdx=1,spinning=false,auto=false,cur=null,cols=[];
+const $=id=>document.getElementById(id);
+
+function save(){localStorage.setItem('slots_credits',credits)}
+function fmt(n){return n.toLocaleString('de-DE')}
+function render(){$('credits').textContent=fmt(credits);$('bet').textContent=BETS[betIdx];$('spin').disabled=spinning||credits<BETS[betIdx]}
+function msg(t,c){const m=$('msg');m.textContent=t;m.className='msg '+(c||'')}
+
+// Lobby
+Object.entries(GAMES).forEach(([id,g])=>{
+  const d=document.createElement('div');d.className='card';d.style.background=g.card;
+  d.innerHTML=`<div class="icons">${g.icons}</div><h3>${g.name}</h3><p>${g.desc}</p><div class="tag">${g.tag}</div>`;
+  d.onclick=()=>openGame(id);$('cards').appendChild(d);
+});
+
+function openGame(id){
+  auto=false;updAuto();cur=GAMES[id];
+  document.body.style.background=cur.bg;
+  const m=document.querySelector('.machine');
+  m.style.setProperty('--accent',cur.accent);m.style.setProperty('--glow',cur.glow);m.style.setProperty('--panel',cur.panel);
+  $('gtitle').textContent=cur.icons.slice(0,2)+' '+cur.name;$('gdesc').textContent=cur.desc;
+  $('linesinfo').textContent=cur.lines.length===1?'1 Gewinnlinie':cur.lines.length+' Gewinnlinien (Einsatz wird aufgeteilt)';
+  const R=$('reels');R.innerHTML='';cols=[];
+  for(let c=0;c<cur.reels;c++){
+    const col=document.createElement('div');col.className='col';
+    for(let r=0;r<cur.rows;r++){const cell=document.createElement('div');cell.className='cell';cell.textContent=pick().s;col.appendChild(cell)}
+    R.appendChild(col);cols.push(col);
+  }
+  buildPaytable();msg('Viel Glück!');$('lastwin').textContent='0';
+  $('lobby').classList.add('hidden');$('game').classList.remove('hidden');render();window.scrollTo(0,0);
+}
+function goLobby(){if(spinning)return;auto=false;updAuto();document.body.style.background='';$('game').classList.add('hidden');$('lobby').classList.remove('hidden')}
+
+function buildPaytable(){
+  const counts=[...new Set(cur.symbols.flatMap(s=>Object.keys(s.pay).map(Number)))].sort((a,b)=>a-b);
+  let h='<tr><th>Symbol</th>'+counts.map(c=>`<th>${c}× in Folge</th>`).join('')+'</tr>';
+  [...cur.symbols].reverse().forEach(s=>{
+    h+=`<tr><td>${s.s}${s.s===cur.wild?' (Wild)':''}</td>`+counts.map(c=>`<td>${s.pay[c]?s.pay[c]+'×':'–'}</td>`).join('')+'</tr>';
+  });
+  h+=`<tr><td colspan="${counts.length+1}" style="opacity:.7;font-size:.8rem">Gewinne zählen von links nach rechts auf einer Linie. Auszahlung = Einsatz pro Linie × Faktor.${cur.multiplier?' Plus Zufalls-Multiplikator bis ×5.':''}</td></tr>`;
+  $('paytable').innerHTML=h;
+}
+
+function pick(){
+  const g=cur||GAMES.classic;const t=g.symbols.reduce((a,b)=>a+b.w,0);let r=Math.random()*t;
+  for(const x of g.symbols){if((r-=x.w)<0)return x}return g.symbols[0];
+}
+function evaluate(grid,bet){
+  const perLine=bet/cur.lines.length;let total=0;const hits=[];
+  cur.lines.forEach(line=>{
+    const syms=line.map((row,c)=>grid[c][row]);
+    let target=syms.find(s=>s.s!==cur.wild)||syms[0];
+    let n=0;for(const s of syms){if(s.s===target.s||s.s===cur.wild)n++;else break}
+    // pure wild run may pay more than substituted symbol
+    let wn=0;if(cur.wild){for(const s of syms){if(s.s===cur.wild)wn++;else break}}
+    let best=0,bestN=0;
+    const p=target.pay[n]||0;if(p>best){best=p;bestN=n}
+    if(wn){const ws=cur.symbols.find(s=>s.s===cur.wild);const wp=ws.pay[wn]||0;if(wp>best){best=wp;bestN=wn}}
+    if(best){total+=perLine*best;for(let c=0;c<bestN;c++)hits.push([c,line[c]])}
+  });
+  return{win:Math.round(total),hits};
+}
+
+function spin(){
+  const bet=BETS[betIdx];
+  if(spinning)return;
+  if(credits<bet){auto=false;updAuto();msg('Nicht genug Credits – fülle auf!');return}
+  spinning=true;credits-=bet;save();render();msg('');
+  document.querySelectorAll('.cell.hit').forEach(e=>e.classList.remove('hit'));
+  const grid=Array.from({length:cur.reels},()=>Array.from({length:cur.rows},pick));
+  const step=cur.reels>3?280:400;
+  cols.forEach((col,c)=>{
+    col.classList.add('spin');
+    const t=setInterval(()=>[...col.children].forEach(cell=>cell.textContent=cur.symbols[Math.floor(Math.random()*cur.symbols.length)].s),70);
+    setTimeout(()=>{clearInterval(t);col.classList.remove('spin');[...col.children].forEach((cell,r)=>cell.textContent=grid[c][r].s);
+      if(c===cur.reels-1)finish(grid,bet)},600+c*step);
+  });
+}
+function finish(grid,bet){
+  let{win,hits}=evaluate(grid,bet);let mult=1;
+  if(win&&cur.multiplier){mult=cur.multiplier[Math.floor(Math.random()*cur.multiplier.length)];win*=mult}
+  hits.forEach(([c,r])=>cols[c].children[r].classList.add('hit'));
+  credits+=win;save();$('lastwin').textContent=fmt(win);
+  const mtxt=mult>1?` (×${mult} Multiplikator!)`:'';
+  if(win>=bet*25)msg(`🎉 MEGA-GEWINN! +${fmt(win)} Credits${mtxt} 🎉`,'win');
+  else if(win>bet)msg(`Gewonnen! +${fmt(win)} Credits${mtxt}`,'win');
+  else if(win>0)msg(`Kleiner Gewinn: +${fmt(win)} Credits${mtxt}`);
+  else msg('Leider nichts – nochmal!');
+  spinning=false;render();
+  if(auto)setTimeout(spin,700);
+}
+function updAuto(){$('auto').textContent='Auto-Spin: '+(auto?'An':'Aus')}
+function refill(){if(spinning)return;credits=START;save();render();if(cur)msg('Credits auf '+fmt(START)+' aufgefüllt')}
+
+$('spin').onclick=spin;
+$('minus').onclick=()=>{if(!spinning&&betIdx>0){betIdx--;render()}};
+$('plus').onclick=()=>{if(!spinning&&betIdx<BETS.length-1){betIdx++;render()}};
+$('auto').onclick=()=>{auto=!auto;updAuto();if(auto&&!spinning)spin()};
+$('refill1').onclick=refill;$('refill2').onclick=refill;
+$('back').onclick=goLobby;$('home').onclick=goLobby;
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&!$('game').classList.contains('hidden')){e.preventDefault();spin()}});
+render();
+</script>
+</body>
+</html>

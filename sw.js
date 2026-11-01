@@ -1,4 +1,4 @@
-const CACHE = 'lucky-casino-v2';
+const CACHE = 'lucky-casino-v3';
 const ASSETS = [
   '/',
   '/index.html',

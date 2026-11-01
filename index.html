@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Lucky Slots">
 <meta name="description" content="Spielgeld-Casino nur zur Unterhaltung. Credits haben keinen Geldwert.">
-<meta name="app-version" content="lucky-casino-3">
+<meta name="app-version" content="lucky-casino-4">
 <title>Lucky Slots Casino – Spielcredits</title>
 <link rel="icon" href="icons/favicon-32.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -18,6 +18,7 @@
 </head>
 <body>
 <div id="fx" aria-hidden="true"></div>
+<div id="rare-flash" aria-hidden="true"></div>
 <header>
   <div class="header-top">
     <button type="button" class="logo" id="logo">LUCKY SLOTS</button>
@@ -52,8 +53,8 @@
   <main id="view-cards" class="view hidden">
     <button type="button" class="back" id="back-cards">← Lobby</button>
     <h1>Karten</h1>
-    <p class="lead">Originale Monster, keine fremden Marken. Fünf Karten pro Pack, eine davon mindestens Selten.</p>
-    <p id="cards-progress" class="muted">0 / 72</p>
+    <p class="lead">Originale Monster in Entwicklungsstufen und Alternativ-Illustrationen. Fünf Karten pro Pack, eine davon mindestens Selten.</p>
+    <p id="cards-progress" class="muted">Sammlung</p>
     <div class="card-tabs">
       <button type="button" id="tab-shop" class="active">Packs</button>
       <button type="button" id="tab-binder">Sammlung</button>
@@ -62,32 +63,53 @@
       <article class="panel pack-offer">
         <h2>Basis-Pack</h2>
         <p>100 Credits. Fünf Karten, davon eine mindestens Selten.</p>
-        <button type="button" id="buy-basis" class="primary">Kaufen</button>
+        <div class="secondary">
+          <button type="button" id="buy-basis" class="primary">1 Pack</button>
+          <button type="button" id="buy-basis-10">10 Packs</button>
+        </div>
+        <details class="odds"><summary>Wahrscheinlichkeiten</summary><ul id="odds-basis"></ul></details>
       </article>
       <article class="panel pack-offer">
         <h2>Elementar-Pack</h2>
         <p>220 Credits. Mehr Karten des gewählten Elements und eine bessere Selten-Chance.</p>
         <div class="element-types" id="element-types"></div>
-        <button type="button" id="buy-element" class="primary">Elementar-Pack kaufen</button>
+        <div class="secondary">
+          <button type="button" id="buy-element" class="primary">1 Pack</button>
+          <button type="button" id="buy-element-10">10 Packs</button>
+        </div>
+        <details class="odds"><summary>Wahrscheinlichkeiten</summary><ul id="odds-element"></ul></details>
       </article>
       <article class="panel pack-offer">
         <h2>Premium-Pack</h2>
-        <p>480 Credits. Höhere Chance auf Holo, Ultra und Geheim.</p>
-        <button type="button" id="buy-premium" class="primary">Kaufen</button>
+        <p>480 Credits. Deutlich höhere Chance auf die seltenen Stufen.</p>
+        <div class="secondary">
+          <button type="button" id="buy-premium" class="primary">1 Pack</button>
+          <button type="button" id="buy-premium-10">10 Packs</button>
+        </div>
+        <details class="odds"><summary>Wahrscheinlichkeiten</summary><ul id="odds-premium"></ul></details>
       </article>
     </section>
     <section id="cards-open" class="hidden">
       <h2 id="open-title">Pack</h2>
       <button type="button" id="pack-visual" class="booster">Pack aufreißen</button>
       <div id="pull-row" class="pull-row"></div>
+      <p id="open-banner" class="open-banner hidden"></p>
       <div class="secondary">
         <button type="button" id="pack-tear" class="primary">Aufreißen</button>
         <button type="button" id="reveal-all" class="hidden">Alle aufdecken</button>
         <button type="button" id="open-done" class="hidden">Zur Sammlung</button>
       </div>
     </section>
+    <section id="cards-bulk" class="hidden">
+      <h2 id="bulk-title">10 Packs</h2>
+      <div id="bulk-summary" class="stat-grid"></div>
+      <h3>Beste Züge</h3>
+      <div id="bulk-best" class="binder-grid"></div>
+      <button type="button" id="bulk-done" class="primary">Fertig</button>
+    </section>
     <section id="cards-binder" class="hidden">
       <p id="binder-progress" class="muted"></p>
+      <input id="card-search" class="card-search" type="search" placeholder="Name suchen" autocomplete="off" enterkeyhint="search">
       <div class="filters">
         <label>Element <select id="filter-type"><option value="">Alle</option></select></label>
         <label>Seltenheit <select id="filter-rarity"><option value="">Alle</option></select></label>
@@ -104,6 +126,11 @@
       </div>
       <button type="button" id="sell-dupes">Duplikate verkaufen</button>
       <div id="binder-grid" class="binder-grid"></div>
+      <div class="pager">
+        <button type="button" id="page-prev">Zurück</button>
+        <span id="page-label">Seite 1</span>
+        <button type="button" id="page-next">Weiter</button>
+      </div>
     </section>
     <div id="card-detail" class="card-detail hidden">
       <button type="button" id="detail-close" class="ghost">Schließen</button>

@@ -2,165 +2,74 @@
   const C = (window.Casino = window.Casino || {});
 
   const TYPES = {
-    feuer: { name: 'Feuer', a: '#7f1d1d', b: '#fb923c' },
-    wasser: { name: 'Wasser', a: '#0c4a6e', b: '#38bdf8' },
-    pflanze: { name: 'Pflanze', a: '#14532d', b: '#4ade80' },
-    blitz: { name: 'Blitz', a: '#713f12', b: '#facc15' },
-    psycho: { name: 'Psycho', a: '#4c1d95', b: '#e879f9' },
-    kampf: { name: 'Kampf', a: '#7f1d1d', b: '#fca5a5' },
-    drache: { name: 'Drache', a: '#1e3a8a', b: '#f59e0b' },
-    geist: { name: 'Geist', a: '#1e1b4b', b: '#a78bfa' }
+    feuer: { name: 'Feuer', a: '#7f1d1d', b: '#fb923c', emoji: ['🦎', '🦊', '🐐', '🦅', '🦁', '🦇', '🐂', '🐅', '🐴', '🔥'] },
+    wasser: { name: 'Wasser', a: '#0c4a6e', b: '#38bdf8', emoji: ['💧', '🦦', '🐚', '🦭', '🐬', '🦢', '🐋', '🦈', '🐟', '🌊'] },
+    pflanze: { name: 'Pflanze', a: '#14532d', b: '#4ade80', emoji: ['🌱', '🍄', '🪲', '🐱', '🌵', '🌳', '🌻', '🍀', '🌺', '🌿'] },
+    blitz: { name: 'Blitz', a: '#713f12', b: '#facc15', emoji: ['⚡', '🐿️', '🐰', '🐝', '🦊', '🦅', '🐃', '🐆', '⚙️', '🌟'] },
+    psycho: { name: 'Psycho', a: '#4c1d95', b: '#e879f9', emoji: ['🌀', '🐱', '🦋', '🐈', '🦉', '🦢', '🦌', '🦄', '✨', '🔮'] },
+    kampf: { name: 'Kampf', a: '#7f1d1d', b: '#fca5a5', emoji: ['🐭', '🐾', '🐦', '🐐', '🐻', '🦡', '🐂', '🦍', '🏆', '🥊'] },
+    drache: { name: 'Drache', a: '#1e3a8a', b: '#f59e0b', emoji: ['🦎', '🐾', '🐲', '💎', '🌪️', '👑', '🪱', '🐉', '☄️', '🧡'] },
+    geist: { name: 'Geist', a: '#1e1b4b', b: '#a78bfa', emoji: ['🌑', '💨', '🕯️', '🦉', '🌫️', '🎭', '🪦', '👻', '🌙', '👁️'] }
   };
+  const TYPE_ORDER = Object.keys(TYPES);
 
   const RARITIES = {
-    common: { name: 'Häufig', rank: 0, sell: 5 },
-    uncommon: { name: 'Ungewöhnlich', rank: 1, sell: 12 },
-    rare: { name: 'Selten', rank: 2, sell: 25 },
-    holo: { name: 'Holo-Selten', rank: 3, sell: 60 },
-    ultra: { name: 'Ultra-Selten', rank: 4, sell: 150 },
-    secret: { name: 'Geheim-Selten', rank: 5, sell: 400 }
+    common: { name: 'Häufig', rank: 0, sell: 3 },
+    uncommon: { name: 'Ungewöhnlich', rank: 1, sell: 8 },
+    rare: { name: 'Selten', rank: 2, sell: 15 },
+    holo: { name: 'Holo-Selten', rank: 3, sell: 35 },
+    ultra: { name: 'Ultra-Selten', rank: 4, sell: 70 },
+    fullart: { name: 'Full-Art', rank: 5, sell: 110 },
+    secret: { name: 'Geheim-Selten', rank: 6, sell: 180 },
+    mythic: { name: 'Legendär-Mythisch', rank: 7, sell: 350 }
   };
 
   const PACKS = {
-    basis: { id: 'basis', name: 'Basis-Pack', price: 100, text: 'Fünf Karten. Eine davon ist mindestens Selten.' },
-    element: { id: 'element', name: 'Elementar-Pack', price: 220, text: 'Mehr Karten eines Elements und eine bessere Selten-Chance.' },
-    premium: { id: 'premium', name: 'Premium-Pack', price: 480, text: 'Deutlich höhere Chance auf Holo, Ultra und Geheim.' }
+    basis: { id: 'basis', name: 'Basis-Pack', price: 100 },
+    element: { id: 'element', name: 'Elementar-Pack', price: 220 },
+    premium: { id: 'premium', name: 'Premium-Pack', price: 480 }
   };
 
   const FILL = {
-    basis: [{ id: 'common', w: 70 }, { id: 'uncommon', w: 30 }],
-    element: [{ id: 'common', w: 60 }, { id: 'uncommon', w: 40 }],
-    premium: [{ id: 'common', w: 45 }, { id: 'uncommon', w: 55 }]
+    basis: [{ id: 'common', w: 7500 }, { id: 'uncommon', w: 2500 }],
+    element: [{ id: 'common', w: 6500 }, { id: 'uncommon', w: 3500 }],
+    premium: [{ id: 'common', w: 4000 }, { id: 'uncommon', w: 6000 }]
   };
   const HIT = {
-    basis: [{ id: 'rare', w: 70 }, { id: 'holo', w: 22 }, { id: 'ultra', w: 6 }, { id: 'secret', w: 2 }],
-    element: [{ id: 'rare', w: 50 }, { id: 'holo', w: 32 }, { id: 'ultra', w: 13 }, { id: 'secret', w: 5 }],
-    premium: [{ id: 'rare', w: 5 }, { id: 'holo', w: 45 }, { id: 'ultra', w: 35 }, { id: 'secret', w: 15 }]
-  };
-  const MID_PREMIUM = [{ id: 'rare', w: 70 }, { id: 'holo', w: 30 }];
-
-  const ROWS = {
-    feuer: [
-      ['Glutling', '🦎', 50, 'Funkenstoß', 20],
-      ['Aschenpfote', '🐾', 60, 'Glutbiss', 30],
-      ['Zunderbock', '🐐', 70, 'Hornbrand', 40],
-      ['Flammkralle', '🦅', 70, 'Feuerkralle', 40],
-      ['Lavafuchs', '🦊', 90, 'Schweifbrand', 60],
-      ['Kohleschwinge', '🦇', 100, 'Glutflug', 70],
-      ['Magmahuf', '🐂', 120, 'Lavastampfer', 80],
-      ['Pyronyx', '🦁', 140, 'Sonnenodem', 100],
-      ['Inferkron', '👑', 170, 'Kernbruch', 130]
+    basis: [
+      { id: 'rare', w: 8242 }, { id: 'holo', w: 1250 }, { id: 'ultra', w: 333 },
+      { id: 'fullart', w: 125 }, { id: 'secret', w: 40 }, { id: 'mythic', w: 10 }
     ],
-    wasser: [
-      ['Tropfling', '💧', 50, 'Spritzer', 20],
-      ['Bachpfote', '🦦', 60, 'Wellenbiss', 30],
-      ['Perlmuschel', '🐚', 70, 'Perlenhieb', 40],
-      ['Flutotter', '🦭', 70, 'Gischt', 40],
-      ['Wellenspringer', '🐬', 90, 'Flutwelle', 60],
-      ['Gischtadler', '🦢', 100, 'Sturzflug', 70],
-      ['Tiefwal', '🐋', 120, 'Strudel', 80],
-      ['Aquoryx', '🦈', 140, 'Gezeiten', 100],
-      ['Ozeankrone', '🌊', 170, 'Abgrund', 130]
+    element: [
+      { id: 'rare', w: 6975 }, { id: 'holo', w: 2000 }, { id: 'ultra', w: 667 },
+      { id: 'fullart', w: 250 }, { id: 'secret', w: 83 }, { id: 'mythic', w: 25 }
     ],
-    pflanze: [
-      ['Knospling', '🌱', 50, 'Ranke', 20],
-      ['Moospfote', '🍄', 60, 'Sporen', 30],
-      ['Dornenkäfer', '🪲', 70, 'Dornstoß', 40],
-      ['Blütenluchs', '🐱', 70, 'Blütenhieb', 40],
-      ['Rankenzweig', '🌵', 90, 'Dornenwall', 60],
-      ['Wurzeltroll', '🌳', 100, 'Wurzelgriff', 70],
-      ['Sonnendorn', '🌻', 120, 'Sonnenstich', 80],
-      ['Chloronyx', '🍀', 140, 'Blattsturm', 100],
-      ['Urwaldherz', '🌺', 170, 'Urwuchs', 130]
-    ],
-    blitz: [
-      ['Funkenling', '⚡', 50, 'Knister', 20],
-      ['Zischpfote', '🐿️', 60, 'Zischbiss', 30],
-      ['Blitzhase', '🐰', 70, 'Sprungblitz', 40],
-      ['Donnerkäfer', '🐝', 70, 'Summstoß', 40],
-      ['Spannungsfuchs', '🦊', 90, 'Entladung', 60],
-      ['Gewitterfalke', '🦅', 100, 'Sturzblitz', 70],
-      ['Voltbulle', '🐃', 120, 'Donnertritt', 80],
-      ['Elektrophex', '🐆', 140, 'Lichtbogen', 100],
-      ['Sturmkrone', '⚙️', 170, 'Überlast', 130]
-    ],
-    psycho: [
-      ['Traumling', '🌀', 50, 'Gedankenhauch', 20],
-      ['Nebelpfote', '🐱', 60, 'Traumkratzer', 30],
-      ['Gedankenfalter', '🦋', 70, 'Wirbel', 40],
-      ['Spiegelkater', '🐈', 70, 'Spiegelhieb', 40],
-      ['Seelenkauz', '🦉', 90, 'Hypnose', 60],
-      ['Hypnoschwan', '🦢', 100, 'Schlaflied', 70],
-      ['Mentalhirsch', '🦌', 120, 'Gedankenstoß', 80],
-      ['Psionyx', '🦄', 140, 'Seelenblick', 100],
-      ['Astralweiser', '✨', 180, 'Sternenriss', 140]
-    ],
-    kampf: [
-      ['Muckling', '🐭', 50, 'Prankenhieb', 20],
-      ['Prankenpfote', '🐾', 60, 'Haken', 30],
-      ['Ringrabe', '🐦', 70, 'Schnabelstoß', 40],
-      ['Stoßziege', '🐐', 70, 'Kopfnuss', 40],
-      ['Faustbär', '🐻', 90, 'Schwinger', 60],
-      ['Wirbelmarder', '🦡', 100, 'Wirbeltritt', 70],
-      ['Arenochse', '🐂', 120, 'Rammbock', 80],
-      ['Kampfnyx', '🦍', 140, 'Titanfaust', 100],
-      ['Ringmeister', '🏆', 180, 'Schlussgong', 140]
-    ],
-    drache: [
-      ['Schuppling', '🦎', 60, 'Funkenzahn', 20],
-      ['Klauenpfote', '🐾', 70, 'Klauengriff', 30],
-      ['Flügelwyrm', '🐲', 80, 'Flügelschlag', 40],
-      ['Kristalldrache', '💎', 90, 'Kristallbiss', 50],
-      ['Sturmwyrm', '🌪️', 110, 'Sturmfauch', 70],
-      ['Goldkamm', '👑', 120, 'Goldatem', 80],
-      ['Höhlenwurm', '🪱', 140, 'Erdspalt', 90],
-      ['Drachenyx', '🐉', 160, 'Drachenodem', 110],
-      ['Urwyrm', '☄️', 190, 'Urfunke', 150]
-    ],
-    geist: [
-      ['Schattenling', '🌑', 50, 'Schattenhauch', 20],
-      ['Nebelhauch', '💨', 60, 'Nebelgriff', 30],
-      ['Irrlicht', '🕯️', 70, 'Irrfunke', 40],
-      ['Gruftkauz', '🦉', 80, 'Nachtschrei', 40],
-      ['Seelennebel', '🌫️', 100, 'Seelenraub', 60],
-      ['Nachtpuppe', '🎭', 110, 'Fadengriff', 70],
-      ['Grabwächter', '🪦', 130, 'Gruftschlag', 80],
-      ['Phantomnyx', '👻', 150, 'Geisterkuss', 100],
-      ['Flüsternacht', '🌙', 190, 'Ewiger Hauch', 150]
+    premium: [
+      { id: 'rare', w: 4800 }, { id: 'holo', w: 3333 }, { id: 'ultra', w: 1250 },
+      { id: 'fullart', w: 400 }, { id: 'secret', w: 167 }, { id: 'mythic', w: 50 }
     ]
   };
+  const MID_PREMIUM = [{ id: 'rare', w: 8000 }, { id: 'holo', w: 2000 }];
 
-  const TYPE_ORDER = Object.keys(ROWS);
-  const SET = [];
-  TYPE_ORDER.forEach((type, typeIndex) => {
-    ROWS[type].forEach((row, index) => {
-      const rarity = index < 8
-        ? ['common', 'common', 'common', 'common', 'uncommon', 'uncommon', 'rare', 'holo'][index]
-        : (typeIndex < 4 ? 'ultra' : 'secret');
-      SET.push({
-        id: type + '-' + (index + 1),
-        type: type,
-        rarity: rarity,
-        name: row[0],
-        emoji: row[1],
-        hp: row[2],
-        attack: row[3],
-        damage: row[4]
-      });
-    });
-  });
-  const BY_ID = {};
-  SET.forEach((card) => { BY_ID[card.id] = card; });
+  const STARTS = ['Glu', 'Asch', 'Fun', 'Lor', 'Vel', 'Nir', 'Tal', 'Kor', 'Mir', 'Zel', 'Bra', 'Lun', 'Sar', 'Dex', 'Rin', 'Hol', 'Pax', 'Vor', 'Kel', 'Syl', 'Oro', 'Lum', 'Tha', 'Gri', 'Wol', 'Fen', 'Bor', 'Kal', 'Rio', 'Sax', 'Yun', 'Pel', 'Tor', 'Mar', 'Hin', 'Dor', 'Bel', 'Ran', 'Sol', 'Ira', 'Oka', 'Nes', 'Var', 'Hel', 'Quin', 'Jas', 'Ero', 'Ulv', 'Kes', 'Fae'];
+  const MIDS = ['ta', 'li', 'no', 'ka', 'mi', 'ra', 've', 'na', 'lo', 'ri', 'sa', 'ne', 'xo', 'um', 'el', 'or', 'an', 'ix', 'ae', 'io'];
+  const ENDS = [
+    ['ling', 'pfote', 'keim', 'funke', 'kind'],
+    ['klaue', 'schweif', 'fang', 'sturm', 'blick'],
+    ['krone', 'fürst', 'rex', 'wacht', 'herz']
+  ];
+  const FORMS = ['Nachtform', 'Glanzform', 'Sonnenform', 'Schattenform'];
+  const ATK = {
+    feuer: ['Glutstoß', 'Brandbiss', 'Funkenhieb', 'Aschensturm', 'Kernhauch'],
+    wasser: ['Spritzer', 'Wellenbiss', 'Gischtflug', 'Strudel', 'Gezeiten'],
+    pflanze: ['Rankenhieb', 'Sporen', 'Dornenwall', 'Blattsturm', 'Urwuchs'],
+    blitz: ['Knister', 'Sprungblitz', 'Entladung', 'Donnertritt', 'Lichtbogen'],
+    psycho: ['Gedankenhauch', 'Wirbel', 'Hypnose', 'Seelenblick', 'Sternenriss'],
+    kampf: ['Prankenhieb', 'Haken', 'Schwinger', 'Rammbock', 'Titanfaust'],
+    drache: ['Funkenzahn', 'Flügelschlag', 'Sturmfauch', 'Drachenodem', 'Urfunke'],
+    geist: ['Schattenhauch', 'Nebelgriff', 'Seelenraub', 'Gruftschlag', 'Ewiger Hauch']
+  };
 
-  let opening = false;
-  let currentPull = [];
-  let revealed = [];
-  let elementType = 'feuer';
-  let sellArmed = false;
-  let detailId = null;
-
-  function $(id) { return document.getElementById(id); }
-  function fast() { return !!(C.timing && C.timing.fast); }
   function hash(text) {
     let value = 2166136261;
     for (let i = 0; i < text.length; i++) {
@@ -169,6 +78,112 @@
     }
     return value >>> 0;
   }
+
+  const SET = [];
+  const BY_ID = {};
+  const usedNames = new Set();
+  function takeName(base) {
+    let name = base;
+    let n = 2;
+    while (usedNames.has(name)) {
+      name = base + ' ' + n;
+      n += 1;
+    }
+    usedNames.add(name);
+    return name;
+  }
+  function rootAt(index) {
+    return STARTS[index % STARTS.length] + MIDS[Math.floor(index / STARTS.length) % MIDS.length];
+  }
+  function pushCard(card) {
+    SET.push(card);
+    BY_ID[card.id] = card;
+  }
+
+  let serial = 0;
+  TYPE_ORDER.forEach((type) => {
+    for (let family = 0; family < 10; family++) {
+      const root = rootAt(serial);
+      serial += 1;
+      const emoji = TYPES[type].emoji[family];
+      let previous = null;
+      let apex = null;
+      for (let stage = 0; stage < 3; stage++) {
+        const rarity = family <= 5
+          ? ['common', 'uncommon', 'rare'][stage]
+          : family <= 7
+            ? ['uncommon', 'rare', 'holo'][stage]
+            : family === 8
+              ? ['rare', 'holo', 'ultra'][stage]
+              : ['common', 'common', 'uncommon'][stage];
+        const id = type + '-f' + family + '-s' + (stage + 1);
+        const ending = ENDS[stage][hash(root + stage) % ENDS[stage].length];
+        const card = {
+          id: id,
+          type: type,
+          rarity: rarity,
+          name: takeName(root + ending),
+          emoji: emoji,
+          stage: stage + 1,
+          alt: false,
+          family: type + '-f' + family,
+          evolvesFrom: previous,
+          hp: [60, 100, 140][stage] + (hash(id) % 16),
+          attack: ATK[type][(stage + family) % ATK[type].length],
+          damage: [30, 55, 85][stage] + (hash(id + 'd') % 12)
+        };
+        pushCard(card);
+        previous = id;
+        apex = card;
+      }
+      if (family <= 3 || family === 8) {
+        const id = type + '-f' + family + '-alt';
+        const form = FORMS[hash(root + 'alt') % FORMS.length];
+        pushCard({
+          id: id,
+          type: type,
+          rarity: family === 8 ? 'secret' : 'fullart',
+          name: takeName(apex.name + ' ' + form),
+          emoji: emoji,
+          stage: 3,
+          alt: true,
+          family: apex.family,
+          evolvesFrom: apex.id,
+          hp: apex.hp + 10,
+          attack: ATK[type][(family + 3) % ATK[type].length],
+          damage: apex.damage + 15
+        });
+      }
+    }
+    const mythId = type + '-myth';
+    const mythBase = SET.find((card) => card.id === type + '-f8-s3');
+    pushCard({
+      id: mythId,
+      type: type,
+      rarity: 'mythic',
+      name: takeName('Mythos ' + mythBase.name),
+      emoji: '🌟',
+      stage: 4,
+      alt: false,
+      family: type + '-myth',
+      evolvesFrom: mythBase.id,
+      hp: 230 + (hash(mythId) % 20),
+      attack: ATK[type][4],
+      damage: 150
+    });
+  });
+
+  let opening = false;
+  let currentPull = [];
+  let revealed = [];
+  let bulkMode = false;
+  let elementType = 'feuer';
+  let sellArmed = false;
+  let binderPage = 0;
+  const PAGE = 24;
+
+  function $(id) { return document.getElementById(id); }
+  function fast() { return !!(C.timing && C.timing.fast); }
   function isRarePlus(rarity) { return RARITIES[rarity].rank >= 2; }
   function isHoloPlus(rarity) { return RARITIES[rarity].rank >= 3; }
 
@@ -184,8 +199,7 @@
   }
 
   function poolFor(rarity, type, used) {
-    const match = (card) => card.rarity === rarity && (!type || card.type === type) && !used.has(card.id);
-    let pool = SET.filter(match);
+    let pool = SET.filter((card) => card.rarity === rarity && (!type || card.type === type) && !used.has(card.id));
     if (!pool.length) pool = SET.filter((card) => card.rarity === rarity && !used.has(card.id));
     if (!pool.length) pool = SET.filter((card) => card.rarity === rarity);
     return pool;
@@ -219,6 +233,41 @@
     });
   }
 
+  function chanceText(weight, total) {
+    const p = weight / total;
+    const pct = (p * 100).toLocaleString('de-DE', { maximumFractionDigits: 1 });
+    const oneIn = Math.max(1, Math.round(1 / p));
+    if (p >= 0.5) return pct + ' %';
+    return pct + ' % · etwa 1 zu ' + oneIn.toLocaleString('de-DE');
+  }
+
+  function oddsFor(packId) {
+    const lines = [];
+    const fill = FILL[packId];
+    const fillTotal = fill.reduce((sum, row) => sum + row.w, 0);
+    const fillLabel = packId === 'premium' ? 'Plätze 1–3' : 'Plätze 1–4';
+    lines.push({
+      label: fillLabel,
+      text: fill.map((row) => RARITIES[row.id].name + ' ' + chanceText(row.w, fillTotal)).join(', ')
+    });
+    if (packId === 'element') {
+      lines.push({ label: 'Element', text: 'Etwa 3 von 4 Karten gehören zum gewählten Element.' });
+    }
+    if (packId === 'premium') {
+      const midTotal = MID_PREMIUM.reduce((sum, row) => sum + row.w, 0);
+      lines.push({
+        label: 'Platz 4',
+        text: MID_PREMIUM.map((row) => RARITIES[row.id].name + ' ' + chanceText(row.w, midTotal)).join(', ')
+      });
+    }
+    const hit = HIT[packId];
+    const hitTotal = hit.reduce((sum, row) => sum + row.w, 0);
+    hit.forEach((row) => {
+      lines.push({ label: 'Selten-Slot · ' + RARITIES[row.id].name, text: chanceText(row.w, hitTotal) });
+    });
+    return lines;
+  }
+
   function dupeValue(bag) {
     let total = 0;
     SET.forEach((card) => {
@@ -233,53 +282,71 @@
     let unique = 0;
     let holos = 0;
     let secrets = 0;
+    let mythics = 0;
     SET.forEach((card) => {
       if ((bag[card.id] || 0) <= 0) return;
       unique += 1;
       if (isHoloPlus(card.rarity)) holos += 1;
       if (card.rarity === 'secret') secrets += 1;
+      if (card.rarity === 'mythic') mythics += 1;
     });
-    C.state.setCollectionCounters({ unique: unique, holos: holos, secrets: secrets });
+    C.state.setCollectionCounters({ unique: unique, holos: holos, secrets: secrets, mythics: mythics });
   }
 
   function selfCheck() {
     const failures = [];
     const names = {};
+    const counts = {};
     SET.forEach((card) => {
       if (names[card.name]) failures.push('Doppelname ' + card.name);
       names[card.name] = true;
+      counts[card.rarity] = (counts[card.rarity] || 0) + 1;
+      if (card.stage === 2 && (!card.evolvesFrom || !BY_ID[card.evolvesFrom] || BY_ID[card.evolvesFrom].stage !== 1)) {
+        failures.push('Entwicklung ' + card.id);
+      }
     });
-    if (SET.length !== 72) failures.push('Setgröße ' + SET.length);
-    let basisReturn = 0;
-    const hitCounts = { rare: 0, holo: 0, ultra: 0, secret: 0 };
-    const runs = 3000;
+    if (SET.length < 250) failures.push('Setgröße ' + SET.length);
+    if (counts.mythic < 4 || counts.mythic > 12) failures.push('Mythics ' + counts.mythic);
+    ['common', 'uncommon', 'rare', 'holo', 'ultra', 'fullart', 'secret'].forEach((rarity) => {
+      if (!counts[rarity]) failures.push('fehlt ' + rarity);
+    });
+    const runs = 20000;
+    const hits = { rare: 0, holo: 0, ultra: 0, fullart: 0, secret: 0, mythic: 0 };
+    let sell = 0;
+    let bad = 0;
     for (let i = 0; i < runs; i++) {
       const pack = rollPack('basis', null, Math.random);
-      if (pack.length !== 5) failures.push('Packlänge');
       const ids = {};
-      pack.forEach((card) => { ids[card.id] = (ids[card.id] || 0) + 1; });
-      if (Object.keys(ids).length !== 5) failures.push('Duplikat im Pack');
-      if (!isRarePlus(pack[4].rarity)) failures.push('Slot 5 nicht selten');
-      if (!pack.some((card) => isRarePlus(card.rarity))) failures.push('Keine Selten+');
-      hitCounts[pack[4].rarity] += 1;
-      pack.forEach((card) => { basisReturn += RARITIES[card.rarity].sell; });
+      pack.forEach((card) => { ids[card.id] = 1; sell += RARITIES[card.rarity].sell; });
+      if (pack.length !== 5 || Object.keys(ids).length !== 5 || !isRarePlus(pack[4].rarity)) bad += 1;
+      hits[pack[4].rarity] += 1;
     }
-    if (hitCounts.rare < 1900 || hitCounts.rare > 2300) failures.push('Selten-Rate ' + hitCounts.rare);
-    if (hitCounts.holo < 500 || hitCounts.holo > 850) failures.push('Holo-Rate ' + hitCounts.holo);
-    if (hitCounts.secret < 20 || hitCounts.secret > 120) failures.push('Geheim-Rate ' + hitCounts.secret);
-    if (basisReturn / runs >= PACKS.basis.price) failures.push('Verkauf zu hoch ' + (basisReturn / runs));
-    let elementHits = 0;
-    let elementCards = 0;
-    for (let i = 0; i < 800; i++) {
+    if (bad) failures.push('Ungültige Basis-Packs ' + bad);
+    if (hits.holo < 2300 || hits.holo > 2700) failures.push('Holo ' + hits.holo);
+    if (hits.ultra < 540 || hits.ultra > 800) failures.push('Ultra ' + hits.ultra);
+    if (hits.fullart < 180 || hits.fullart > 340) failures.push('Fullart ' + hits.fullart);
+    if (hits.secret < 40 || hits.secret > 130) failures.push('Geheim ' + hits.secret);
+    if (hits.mythic < 5 || hits.mythic > 45) failures.push('Mythisch ' + hits.mythic);
+    if (sell / runs >= PACKS.basis.price) failures.push('Basis-Verkauf ' + (sell / runs).toFixed(1));
+    let elementTyped = 0;
+    let elementAll = 0;
+    let premiumSell = 0;
+    for (let i = 0; i < 2000; i++) {
       rollPack('element', 'wasser', Math.random).forEach((card) => {
-        elementCards += 1;
-        if (card.type === 'wasser') elementHits += 1;
+        elementAll += 1;
+        if (card.type === 'wasser') elementTyped += 1;
       });
-      const premium = rollPack('premium', null, Math.random);
-      if (!isRarePlus(premium[4].rarity) || !isRarePlus(premium[3].rarity)) failures.push('Premium ohne Selten+');
+      rollPack('premium', null, Math.random).forEach((card) => { premiumSell += RARITIES[card.rarity].sell; });
     }
-    if (elementHits / elementCards < 0.55) failures.push('Elementar-Anteil ' + (elementHits / elementCards));
-    return { failures: failures };
+    if (elementTyped / elementAll < 0.7) failures.push('Element ' + (elementTyped / elementAll).toFixed(2));
+    if (premiumSell / 2000 >= PACKS.premium.price) failures.push('Premium-Verkauf ' + (premiumSell / 2000).toFixed(1));
+    const holoLine = oddsFor('basis').find((line) => line.label.indexOf('Holo') !== -1);
+    if (!holoLine || holoLine.text.indexOf('1 zu 8') === -1) failures.push('Odds Holo ' + (holoLine && holoLine.text));
+    const mythicLine = oddsFor('basis').find((line) => line.label.indexOf('Mythisch') !== -1);
+    if (!mythicLine || mythicLine.text.indexOf('1 zu 1.000') === -1 && mythicLine.text.indexOf('1 zu 1000') === -1) {
+      failures.push('Odds Mythisch ' + (mythicLine && mythicLine.text));
+    }
+    return { failures: failures, size: SET.length, counts: counts };
   }
 
   function artNode(card) {
@@ -291,19 +358,21 @@
     const seed = hash(card.id);
     const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
     const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
-    const gid = 'g' + seed.toString(16) + '-' + Math.floor(Math.random() * 1e9).toString(16);
+    const gid = 'g' + seed.toString(16) + '-' + (SET.indexOf(card) + 1);
     gradient.setAttribute('id', gid);
     gradient.setAttribute('x1', '0');
     gradient.setAttribute('y1', '0');
     gradient.setAttribute('x2', '1');
     gradient.setAttribute('y2', '1');
-    const stopA = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-    stopA.setAttribute('offset', '0%');
-    stopA.setAttribute('stop-color', type.a);
-    const stopB = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-    stopB.setAttribute('offset', '100%');
-    stopB.setAttribute('stop-color', type.b);
-    gradient.append(stopA, stopB);
+    const colors = card.rarity === 'mythic'
+      ? ['#f43f5e', '#facc15', '#22d3ee']
+      : [type.a, card.alt ? '#fde047' : type.b];
+    colors.forEach((color, index) => {
+      const stop = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+      stop.setAttribute('offset', Math.round(index * 100 / (colors.length - 1)) + '%');
+      stop.setAttribute('stop-color', color);
+      gradient.appendChild(stop);
+    });
     defs.appendChild(gradient);
     svg.appendChild(defs);
     const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -311,15 +380,17 @@
     bg.setAttribute('height', '104');
     bg.setAttribute('fill', 'url(#' + gid + ')');
     svg.appendChild(bg);
-    for (let i = 0; i < 3; i++) {
-      const blob = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      const x = 30 + ((seed >> (i * 5)) & 1023) % 100;
-      const y = 24 + ((seed >> (i * 3 + 2)) & 511) % 60;
-      const r = 10 + ((seed >> (i + 4)) & 15);
-      blob.setAttribute('cx', String(x));
-      blob.setAttribute('cy', String(y));
-      blob.setAttribute('r', String(r));
-      blob.setAttribute('fill', 'rgba(255,255,255,.18)');
+    const blobs = card.alt ? 5 : 3;
+    for (let i = 0; i < blobs; i++) {
+      const blob = document.createElementNS('http://www.w3.org/2000/svg', card.alt && i === 0 ? 'polygon' : 'circle');
+      if (blob.tagName === 'polygon') {
+        blob.setAttribute('points', '80,12 98,48 140,52 108,78 118,118 80,96 42,118 52,78 20,52 62,48');
+      } else {
+        blob.setAttribute('cx', String(24 + ((seed >>> (i * 3)) % 110)));
+        blob.setAttribute('cy', String(20 + ((seed >>> (i + 5)) % 64)));
+        blob.setAttribute('r', String(8 + ((seed >>> (i + 1)) % 16)));
+      }
+      blob.setAttribute('fill', 'rgba(255,255,255,.2)');
       svg.appendChild(blob);
     }
     const motif = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -330,6 +401,12 @@
     motif.textContent = card.emoji;
     svg.appendChild(motif);
     return svg;
+  }
+
+  function stageLabel(card) {
+    if (card.rarity === 'mythic') return 'Mythisch';
+    if (card.alt) return 'Alternativ · Stufe 3';
+    return 'Stufe ' + card.stage;
   }
 
   function faceNode(card, count) {
@@ -351,7 +428,7 @@
     wrap.appendChild(artNode(card));
     const type = document.createElement('div');
     type.className = 'tc-type';
-    type.textContent = TYPES[card.type].name;
+    type.textContent = TYPES[card.type].name + ' · ' + stageLabel(card);
     const attack = document.createElement('div');
     attack.className = 'tc-attack';
     const atk = document.createElement('span');
@@ -386,6 +463,7 @@
   function showShop() {
     $('cards-shop').classList.remove('hidden');
     $('cards-open').classList.add('hidden');
+    $('cards-bulk').classList.add('hidden');
     $('cards-binder').classList.add('hidden');
     $('tab-shop').classList.add('active');
     $('tab-binder').classList.remove('active');
@@ -396,6 +474,7 @@
     if (opening) return;
     $('cards-shop').classList.add('hidden');
     $('cards-open').classList.add('hidden');
+    $('cards-bulk').classList.add('hidden');
     $('cards-binder').classList.remove('hidden');
     $('tab-shop').classList.remove('active');
     $('tab-binder').classList.add('active');
@@ -404,14 +483,17 @@
 
   function ownedCount() {
     const bag = C.state.cardBag();
-    return SET.filter((card) => (bag[card.id] || 0) > 0).length;
+    let count = 0;
+    SET.forEach((card) => { if ((bag[card.id] || 0) > 0) count += 1; });
+    return count;
   }
 
   function renderShop() {
     const credits = C.state.get().credits;
-    $('buy-basis').disabled = opening || credits < PACKS.basis.price;
-    $('buy-element').disabled = opening || credits < PACKS.element.price;
-    $('buy-premium').disabled = opening || credits < PACKS.premium.price;
+    ['basis', 'element', 'premium'].forEach((id) => {
+      $(id === 'basis' ? 'buy-basis' : id === 'element' ? 'buy-element' : 'buy-premium').disabled = opening || credits < PACKS[id].price;
+      $(id === 'basis' ? 'buy-basis-10' : id === 'element' ? 'buy-element-10' : 'buy-premium-10').disabled = opening || credits < PACKS[id].price * 10;
+    });
     const owned = ownedCount();
     $('cards-progress').textContent = owned + ' / ' + SET.length + ' · ' + Math.floor(owned * 100 / SET.length) + ' %';
     document.querySelectorAll('[data-element]').forEach((button) => {
@@ -428,17 +510,18 @@
       $('pack-tear').classList.remove('hidden');
       $('reveal-all').classList.add('hidden');
       $('open-done').classList.add('hidden');
+      $('open-banner').classList.add('hidden');
       return;
     }
     pack.classList.add('hidden');
     $('pack-tear').classList.add('hidden');
-    $('reveal-all').classList.toggle('hidden', revealed.every(Boolean));
-    $('open-done').classList.toggle('hidden', !revealed.every(Boolean));
+    const done = revealed.every(Boolean);
+    $('reveal-all').classList.toggle('hidden', done);
+    $('open-done').classList.toggle('hidden', !done);
     currentPull.forEach((card, index) => {
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = 'flipper' + (revealed[index] ? ' revealed' : '');
-      button.dataset.index = String(index);
+      button.className = 'flipper' + (revealed[index] ? ' revealed' : '') + (revealed[index] && card.rarity === 'mythic' ? ' spotlight' : '');
       const inner = document.createElement('div');
       inner.className = 'flip-inner';
       const back = document.createElement('div');
@@ -455,60 +538,132 @@
     });
   }
 
+  function spectacle(card) {
+    const rank = RARITIES[card.rarity].rank;
+    if (C.audio) {
+      if (card.rarity === 'mythic') C.audio.mythic();
+      else if (card.rarity === 'secret') C.audio.gold();
+      else if (card.rarity === 'fullart') C.audio.fullArt();
+      else if (card.rarity === 'ultra') C.audio.fanfare();
+      else if (isHoloPlus(card.rarity)) C.audio.holo();
+      else C.audio.card();
+    }
+    if (rank >= 5) C.effects.celebrate('mega');
+    else if (rank >= 3) C.effects.celebrate('big');
+    if (rank >= 4) {
+      const flash = $('rare-flash');
+      flash.className = 'show rarity-' + card.rarity;
+      window.setTimeout(() => { flash.className = ''; }, fast() ? 40 : (card.rarity === 'mythic' ? 1600 : 900));
+    }
+    const banner = $('open-banner');
+    if (rank >= 4) {
+      banner.textContent = RARITIES[card.rarity].name + ': ' + card.name;
+      banner.classList.remove('hidden');
+    }
+  }
+
   function revealOne(index) {
     if (revealed[index]) return;
     revealed[index] = true;
-    const card = currentPull[index];
-    if (C.audio) {
-      C.audio.card();
-      if (card.rarity === 'ultra' || card.rarity === 'secret') C.audio.fanfare();
-      else if (isHoloPlus(card.rarity)) C.audio.holo();
-    }
-    if (card.rarity === 'ultra' || card.rarity === 'secret') C.effects.celebrate('mega');
-    else if (card.rarity === 'holo') C.effects.celebrate('big');
+    spectacle(currentPull[index]);
     if (revealed.every(Boolean)) opening = false;
     renderOpen();
     renderShop();
   }
 
-  function buy(packId) {
+  function grant(pulls, cost, count) {
+    C.state.addCredits(-cost);
+    const bag = C.state.cardBag();
+    pulls.forEach((card) => { bag[card.id] = (bag[card.id] || 0) + 1; });
+    C.state.saveCardBag(bag);
+    C.state.recordRound({ game: 'cards', wagered: cost, payout: 0, pack: true, packCount: count });
+    syncCounters();
+  }
+
+  function buy(packId, count) {
     if (opening) return;
     const pack = PACKS[packId];
-    if (C.state.get().credits < pack.price) {
+    const amount = count || 1;
+    const cost = pack.price * amount;
+    if (C.state.get().credits < cost) {
       if (C.app && C.app.toast) C.app.toast('Nicht genug Credits.');
       return;
     }
     const type = packId === 'element' ? elementType : null;
-    const pulls = C.cards._debugPack || rollPack(packId, type, Math.random);
-    C.cards._debugPack = null;
+    let pulls = [];
+    if (amount === 1 && C.cards._debugPack) {
+      pulls = C.cards._debugPack;
+      C.cards._debugPack = null;
+    } else {
+      for (let i = 0; i < amount; i++) pulls = pulls.concat(rollPack(packId, type, Math.random));
+    }
     opening = true;
-    C.state.addCredits(-pack.price);
-    const bag = C.state.cardBag();
-    pulls.forEach((card) => { bag[card.id] = (bag[card.id] || 0) + 1; });
-    C.state.saveCardBag(bag);
-    C.state.recordRound({ game: 'cards', wagered: pack.price, payout: 0, pack: true });
-    syncCounters();
-    currentPull = pulls;
-    revealed = [];
+    bulkMode = amount > 1;
+    grant(pulls, cost, amount);
     $('cards-shop').classList.add('hidden');
     $('cards-binder').classList.add('hidden');
-    $('cards-open').classList.remove('hidden');
-    $('open-title').textContent = pack.name;
-    renderOpen();
+    if (amount > 1) {
+      currentPull = pulls;
+      $('cards-open').classList.add('hidden');
+      renderBulk(pack, pulls);
+    } else {
+      currentPull = pulls;
+      revealed = [];
+      $('cards-bulk').classList.add('hidden');
+      $('cards-open').classList.remove('hidden');
+      $('open-title').textContent = pack.name;
+      renderOpen();
+    }
   }
 
-  function renderBinder() {
+  function renderBulk(pack, pulls) {
+    $('cards-bulk').classList.remove('hidden');
+    $('bulk-title').textContent = '10× ' + pack.name;
+    const summary = $('bulk-summary');
+    summary.replaceChildren();
+    Object.keys(RARITIES).forEach((id) => {
+      const count = pulls.filter((card) => card.rarity === id).length;
+      if (!count) return;
+      const box = document.createElement('div');
+      box.className = 'stat';
+      const strong = document.createElement('b');
+      strong.textContent = String(count);
+      const span = document.createElement('span');
+      span.textContent = RARITIES[id].name;
+      box.append(strong, span);
+      summary.appendChild(box);
+    });
+    const best = pulls.filter((card) => isHoloPlus(card.rarity))
+      .sort((a, b) => RARITIES[b.rarity].rank - RARITIES[a.rarity].rank)
+      .slice(0, 12);
+    const host = $('bulk-best');
+    host.replaceChildren();
+    if (!best.length) {
+      const empty = document.createElement('p');
+      empty.className = 'muted';
+      empty.textContent = 'Keine besondere Karte in diesem Schwung.';
+      host.appendChild(empty);
+      return;
+    }
     const bag = C.state.cardBag();
-    const owned = ownedCount();
-    $('binder-progress').textContent = owned + ' / ' + SET.length + ' · ' + Math.floor(owned * 100 / SET.length) + ' % der Sammlung';
+    best.forEach((card) => {
+      const button = miniButton(card, bag[card.id] || 1);
+      host.appendChild(button);
+    });
+  }
+
+  function filteredList() {
+    const bag = C.state.cardBag();
     const type = $('filter-type').value;
     const rarity = $('filter-rarity').value;
     const sort = $('filter-sort').value;
+    const query = ($('card-search').value || '').trim().toLocaleLowerCase('de');
     const onlyMissing = $('filter-missing').checked;
     const onlyDupes = $('filter-dupes').checked;
-    let list = SET.filter((card) => {
+    const list = SET.filter((card) => {
       if (type && card.type !== type) return false;
       if (rarity && card.rarity !== rarity) return false;
+      if (query && card.name.toLocaleLowerCase('de').indexOf(query) === -1) return false;
       const count = bag[card.id] || 0;
       if (onlyMissing && count > 0) return false;
       if (onlyDupes && count < 2) return false;
@@ -516,52 +671,73 @@
     });
     list.sort((a, b) => {
       if (sort === 'name') return a.name.localeCompare(b.name, 'de');
-      if (sort === 'rarity') return RARITIES[b.rarity].rank - RARITIES[a.rarity].rank;
+      if (sort === 'rarity') return RARITIES[b.rarity].rank - RARITIES[a.rarity].rank || a.name.localeCompare(b.name, 'de');
       if (sort === 'owned') return (bag[b.id] || 0) - (bag[a.id] || 0);
       return SET.indexOf(a) - SET.indexOf(b);
     });
+    return list;
+  }
+
+  function miniButton(card, count) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'mini' + (count ? ' owned' : ' missing') + (isHoloPlus(card.rarity) && count ? ' holo' : '');
+    button.style.setProperty('--ta', TYPES[card.type].a);
+    button.style.setProperty('--tb', TYPES[card.type].b);
+    const art = document.createElement('div');
+    art.className = 'mini-art';
+    art.textContent = count ? card.emoji : '❔';
+    const name = document.createElement('b');
+    name.textContent = card.name;
+    const meta = document.createElement('span');
+    meta.textContent = TYPES[card.type].name + ' · ' + stageLabel(card);
+    button.append(art, name, meta);
+    if (count > 1) {
+      const badge = document.createElement('i');
+      badge.textContent = '×' + count;
+      button.appendChild(badge);
+    }
+    button.addEventListener('click', () => openDetail(card.id));
+    return button;
+  }
+
+  function renderBinder() {
+    const bag = C.state.cardBag();
+    const owned = ownedCount();
+    $('binder-progress').textContent = owned + ' / ' + SET.length + ' · ' + Math.floor(owned * 100 / SET.length) + ' % der Sammlung';
+    const list = filteredList();
+    const pages = Math.max(1, Math.ceil(list.length / PAGE));
+    if (binderPage > pages - 1) binderPage = pages - 1;
+    if (binderPage < 0) binderPage = 0;
+    const slice = list.slice(binderPage * PAGE, binderPage * PAGE + PAGE);
     const grid = $('binder-grid');
     grid.replaceChildren();
-    list.forEach((card) => {
-      const count = bag[card.id] || 0;
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'mini' + (count ? ' owned' : ' missing') + (isHoloPlus(card.rarity) && count ? ' holo' : '');
-      button.style.setProperty('--ta', TYPES[card.type].a);
-      button.style.setProperty('--tb', TYPES[card.type].b);
-      const art = document.createElement('div');
-      art.className = 'mini-art';
-      art.textContent = count ? card.emoji : '❔';
-      const name = document.createElement('b');
-      name.textContent = card.name;
-      const meta = document.createElement('span');
-      meta.textContent = TYPES[card.type].name + ' · ' + RARITIES[card.rarity].name;
-      button.append(art, name, meta);
-      if (count > 1) {
-        const badge = document.createElement('i');
-        badge.textContent = '×' + count;
-        button.appendChild(badge);
-      }
-      button.addEventListener('click', () => openDetail(card.id));
-      grid.appendChild(button);
-    });
+    if (!slice.length) {
+      const empty = document.createElement('p');
+      empty.className = 'muted';
+      empty.textContent = 'Keine Karten für diese Suche.';
+      grid.appendChild(empty);
+    }
+    slice.forEach((card) => grid.appendChild(miniButton(card, bag[card.id] || 0)));
+    $('page-label').textContent = 'Seite ' + (binderPage + 1) + ' von ' + pages;
+    $('page-prev').disabled = binderPage <= 0;
+    $('page-next').disabled = binderPage >= pages - 1;
     const value = dupeValue(bag);
     sellArmed = false;
     $('sell-dupes').textContent = value > 0 ? 'Duplikate verkaufen · +' + C.state.fmt(value) : 'Keine Duplikate';
     $('sell-dupes').disabled = value <= 0;
-    $('sell-dupes').dataset.value = String(value);
   }
 
   function openDetail(id) {
     const card = BY_ID[id];
     if (!card) return;
-    detailId = id;
     const bag = C.state.cardBag();
     const host = $('detail-card');
     host.replaceChildren(faceNode(card, bag[id] || 0));
-    $('detail-count').textContent = (bag[id] || 0) > 0
-      ? 'Im Besitz: ' + (bag[id] || 0)
-      : 'Noch nicht in der Sammlung.';
+    let extra = (bag[id] || 0) > 0 ? 'Im Besitz: ' + bag[id] : 'Noch nicht in der Sammlung.';
+    if (card.alt && BY_ID[card.evolvesFrom]) extra += ' Alternative Illustration von ' + BY_ID[card.evolvesFrom].name + '.';
+    else if (card.evolvesFrom && BY_ID[card.evolvesFrom]) extra += ' Entwicklung von ' + BY_ID[card.evolvesFrom].name + '.';
+    $('detail-count').textContent = extra;
     $('card-detail').classList.remove('hidden');
   }
 
@@ -574,15 +750,27 @@
       return;
     }
     const bag = C.state.cardBag();
-    SET.forEach((card) => {
-      if ((bag[card.id] || 0) > 1) bag[card.id] = 1;
-    });
+    SET.forEach((card) => { if ((bag[card.id] || 0) > 1) bag[card.id] = 1; });
     C.state.saveCardBag(bag);
     C.state.noteSale(value);
     sellArmed = false;
     if (C.app && C.app.toast) C.app.toast('Duplikate verkauft: +' + C.state.fmt(value) + ' Credits');
     renderBinder();
     renderShop();
+  }
+
+  function fillOdds() {
+    ['basis', 'element', 'premium'].forEach((id) => {
+      const list = $('odds-' + id);
+      list.replaceChildren();
+      oddsFor(id).forEach((line) => {
+        const item = document.createElement('li');
+        const strong = document.createElement('b');
+        strong.textContent = line.label + ': ';
+        item.append(strong, document.createTextNode(line.text));
+        list.appendChild(item);
+      });
+    });
   }
 
   function debugGrant(id, count) {
@@ -593,65 +781,68 @@
   }
 
   function init() {
+    C.state.setCollectionSize(SET.length);
     const types = $('element-types');
     TYPE_ORDER.forEach((id) => {
       const button = document.createElement('button');
       button.type = 'button';
       button.dataset.element = id;
       button.textContent = TYPES[id].name;
-      button.addEventListener('click', () => {
-        elementType = id;
-        renderShop();
-      });
+      button.addEventListener('click', () => { elementType = id; renderShop(); });
       types.appendChild(button);
     });
-    const typeFilter = $('filter-type');
-    const rarityFilter = $('filter-rarity');
     TYPE_ORDER.forEach((id) => {
       const option = document.createElement('option');
       option.value = id;
       option.textContent = TYPES[id].name;
-      typeFilter.appendChild(option);
+      $('filter-type').appendChild(option);
     });
     Object.keys(RARITIES).forEach((id) => {
       const option = document.createElement('option');
       option.value = id;
       option.textContent = RARITIES[id].name;
-      rarityFilter.appendChild(option);
+      $('filter-rarity').appendChild(option);
     });
-    $('buy-basis').addEventListener('click', () => buy('basis'));
-    $('buy-element').addEventListener('click', () => buy('element'));
-    $('buy-premium').addEventListener('click', () => buy('premium'));
+    fillOdds();
+    $('buy-basis').addEventListener('click', () => buy('basis', 1));
+    $('buy-element').addEventListener('click', () => buy('element', 1));
+    $('buy-premium').addEventListener('click', () => buy('premium', 1));
+    $('buy-basis-10').addEventListener('click', () => buy('basis', 10));
+    $('buy-element-10').addEventListener('click', () => buy('element', 10));
+    $('buy-premium-10').addEventListener('click', () => buy('premium', 10));
     $('tab-shop').addEventListener('click', showShop);
     $('tab-binder').addEventListener('click', showBinder);
     $('pack-tear').addEventListener('click', () => {
       if (C.audio) C.audio.packTear();
-      const pack = $('pack-visual');
-      pack.classList.add('torn');
+      $('pack-visual').classList.add('torn');
       window.setTimeout(() => {
         revealed = currentPull.map(() => false);
         renderOpen();
       }, fast() ? 20 : 420);
     });
     $('reveal-all').addEventListener('click', () => {
+      let best = null;
       currentPull.forEach((card, index) => {
-        if (!revealed[index]) revealOne(index);
+        if (!revealed[index]) {
+          revealed[index] = true;
+          if (!best || RARITIES[card.rarity].rank > RARITIES[best.rarity].rank) best = card;
+        }
       });
-    });
-    $('open-done').addEventListener('click', () => {
+      if (best) spectacle(best);
       opening = false;
-      showBinder();
+      renderOpen();
+      renderShop();
     });
+    $('open-done').addEventListener('click', () => { opening = false; showBinder(); });
+    $('bulk-done').addEventListener('click', () => { opening = false; bulkMode = false; showBinder(); });
     $('sell-dupes').addEventListener('click', sellDupes);
-    $('detail-close').addEventListener('click', () => {
-      $('card-detail').classList.add('hidden');
-      detailId = null;
+    $('detail-close').addEventListener('click', () => $('card-detail').classList.add('hidden'));
+    ['filter-type', 'filter-rarity', 'filter-sort', 'filter-missing', 'filter-dupes'].forEach((id) => {
+      $(id).addEventListener('change', () => { binderPage = 0; renderBinder(); });
     });
-    ['filter-type', 'filter-rarity', 'filter-sort'].forEach((id) => {
-      $(id).addEventListener('change', renderBinder);
-    });
-    $('filter-missing').addEventListener('change', renderBinder);
-    $('filter-dupes').addEventListener('change', renderBinder);
+    $('card-search').addEventListener('input', () => { binderPage = 0; renderBinder(); });
+    $('page-prev').addEventListener('click', () => { binderPage -= 1; renderBinder(); });
+    $('page-next').addEventListener('click', () => { binderPage += 1; renderBinder(); });
     window.addEventListener('deviceorientation', (event) => {
       if (event.gamma == null || event.beta == null) return;
       const rx = Math.max(-14, Math.min(14, event.gamma / 4));
@@ -662,6 +853,8 @@
       });
     });
     syncCounters();
+    C.cards.meta.desc = 'Öffne Booster und sammle ' + SET.length + ' originale Monster. Nur Spielcredits.';
+    C.cards.meta.tag = SET.length + ' Karten';
   }
 
   C.cards = {
@@ -673,23 +866,25 @@
       id: 'cards',
       name: 'Kartenladen',
       icons: '🃏✨',
-      desc: 'Öffne Booster und sammle 72 originale Monster. Nur Spielcredits.',
+      desc: 'Öffne Booster und sammle ein großes originales Monsterset. Nur Spielcredits.',
       tag: '5 Karten je Pack',
       card: 'linear-gradient(135deg,#4c1d95,#9a3412)'
     },
     init: init,
     onShow() {
       if (!opening) showShop();
+      else if (bulkMode) $('cards-bulk').classList.remove('hidden');
       else renderOpen();
     },
     refresh() {
-      if ($('view-cards').classList.contains('hidden')) return;
+      if (!$('view-cards') || $('view-cards').classList.contains('hidden')) return;
       renderShop();
       if (!$('cards-binder').classList.contains('hidden')) renderBinder();
     },
     isBusy: () => opening,
     close() { return !opening; },
     rollPack: rollPack,
+    oddsFor: oddsFor,
     selfCheck: selfCheck,
     debugGrant: debugGrant,
     _debugPack: null

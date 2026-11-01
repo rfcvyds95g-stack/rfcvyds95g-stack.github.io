@@ -121,6 +121,19 @@
     },
     holo() {
       [880, 1175, 1568].forEach((freq, index) => tone(freq, 0.18, 'sine', 0.05, index * 0.07));
+    },
+    fullArt() {
+      noise(0.12, 0.05);
+      [523, 784, 1046, 1318].forEach((freq, index) => tone(freq, 0.24, 'triangle', 0.07, index * 0.09));
+    },
+    gold() {
+      [392, 494, 587, 784, 988].forEach((freq, index) => tone(freq, 0.28, 'sawtooth', 0.045, index * 0.1));
+      tone(1175, 0.4, 'sine', 0.04, 0.45);
+    },
+    mythic() {
+      [523, 659, 784, 1046, 1318, 1568, 2093].forEach((freq, index) => tone(freq, 0.34, 'triangle', 0.08, index * 0.11));
+      tone(2637, 0.55, 'sine', 0.04, 0.7);
+      noise(0.2, 0.04);
     }
   };
 

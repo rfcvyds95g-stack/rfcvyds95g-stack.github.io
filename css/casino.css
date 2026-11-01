@@ -397,6 +397,28 @@ tr:nth-child(even) td { background: rgba(255, 255, 255, .05); }
 @media (min-width: 720px) {
   .binder-grid { grid-template-columns: repeat(5, 1fr); }
 }
+.odds { margin-top: 8px; color: var(--muted); font-size: .78rem; }
+.odds summary { min-height: 36px; cursor: pointer; }
+.odds li { margin: 4px 0 4px 16px; }
+.card-search { width: 100%; margin: 8px 0; min-height: 44px; border: 0; border-radius: 12px; padding: 10px 12px; background: #1f1630; color: #fff; }
+.pager { display: flex; gap: 8px; align-items: center; justify-content: center; margin: 12px 0; }
+.open-banner { text-align: center; font-weight: 800; color: #fde047; margin: 8px 0; }
+#rare-flash { position: fixed; inset: 0; pointer-events: none; z-index: 72; opacity: 0; }
+#rare-flash.show { animation: rareFlash .9s ease; }
+#rare-flash.show.rarity-ultra { background: radial-gradient(circle, rgba(253,224,71,.85), transparent 68%); }
+#rare-flash.show.rarity-fullart { background: radial-gradient(circle, rgba(103,232,249,.8), transparent 70%); }
+#rare-flash.show.rarity-secret { background: radial-gradient(circle, rgba(251,191,36,.9), rgba(124,45,18,.35) 42%, transparent 72%); }
+#rare-flash.show.rarity-mythic { background: linear-gradient(120deg, rgba(244,63,94,.75), rgba(250,204,21,.75), rgba(34,211,238,.75), rgba(167,139,250,.75)); animation: rareFlash 1.6s ease; }
+@keyframes rareFlash { 0% { opacity: 0; } 18% { opacity: 1; } 100% { opacity: 0; } }
+.tc.rarity-fullart { box-shadow: 0 0 14px rgba(34,211,238,.55); }
+.tc.rarity-secret { box-shadow: 0 0 16px rgba(251,191,36,.75); }
+.tc.rarity-mythic { animation: mythicGlow 2.2s linear infinite; }
+@keyframes mythicGlow {
+  0% { box-shadow: 0 0 12px #f43f5e, inset 0 0 0 1px #fde047; }
+  50% { box-shadow: 0 0 18px #22d3ee, inset 0 0 0 1px #a78bfa; }
+  100% { box-shadow: 0 0 12px #facc15, inset 0 0 0 1px #fde047; }
+}
+.flipper.spotlight { width: min(168px, 46vw); height: 236px; }
 
 @media (min-width: 720px) {
   .grid { grid-template-columns: repeat(3, 1fr); }

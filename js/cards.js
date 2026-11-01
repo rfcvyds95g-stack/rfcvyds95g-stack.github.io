@@ -349,58 +349,188 @@
     return { failures: failures, size: SET.length, counts: counts };
   }
 
-  function artNode(card) {
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('viewBox', '0 0 160 104');
-    svg.setAttribute('class', 'tc-art');
-    svg.setAttribute('aria-hidden', 'true');
-    const type = TYPES[card.type];
-    const seed = hash(card.id);
-    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-    const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
-    const gid = 'g' + seed.toString(16) + '-' + (SET.indexOf(card) + 1);
-    gradient.setAttribute('id', gid);
-    gradient.setAttribute('x1', '0');
-    gradient.setAttribute('y1', '0');
-    gradient.setAttribute('x2', '1');
-    gradient.setAttribute('y2', '1');
-    const colors = card.rarity === 'mythic'
-      ? ['#f43f5e', '#facc15', '#22d3ee']
-      : [type.a, card.alt ? '#fde047' : type.b];
-    colors.forEach((color, index) => {
-      const stop = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
-      stop.setAttribute('offset', Math.round(index * 100 / (colors.length - 1)) + '%');
-      stop.setAttribute('stop-color', color);
-      gradient.appendChild(stop);
-    });
-    defs.appendChild(gradient);
-    svg.appendChild(defs);
-    const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    bg.setAttribute('width', '160');
-    bg.setAttribute('height', '104');
-    bg.setAttribute('fill', 'url(#' + gid + ')');
-    svg.appendChild(bg);
-    const blobs = card.alt ? 5 : 3;
-    for (let i = 0; i < blobs; i++) {
-      const blob = document.createElementNS('http://www.w3.org/2000/svg', card.alt && i === 0 ? 'polygon' : 'circle');
-      if (blob.tagName === 'polygon') {
-        blob.setAttribute('points', '80,12 98,48 140,52 108,78 118,118 80,96 42,118 52,78 20,52 62,48');
-      } else {
-        blob.setAttribute('cx', String(24 + ((seed >>> (i * 3)) % 110)));
-        blob.setAttribute('cy', String(20 + ((seed >>> (i + 5)) % 64)));
-        blob.setAttribute('r', String(8 + ((seed >>> (i + 1)) % 16)));
-      }
-      blob.setAttribute('fill', 'rgba(255,255,255,.2)');
-      svg.appendChild(blob);
+  const NS = 'http://www.w3.org/2000/svg';
+  const PAINT = {
+    feuer: { body: '#e25822', belly: '#ffd7a8', dark: '#7c2d12', extra: '#fde047' },
+    wasser: { body: '#3b82f6', belly: '#e0f2fe', dark: '#0c4a6e', extra: '#67e8f9' },
+    pflanze: { body: '#22c55e', belly: '#ecfccb', dark: '#14532d', extra: '#86efac' },
+    blitz: { body: '#f59e0b', belly: '#fef3c7', dark: '#78350f', extra: '#fde047' },
+    psycho: { body: '#c084fc', belly: '#fae8ff', dark: '#581c87', extra: '#f0abfc' },
+    kampf: { body: '#f87171', belly: '#fee2e2', dark: '#7f1d1d', extra: '#fecaca' },
+    drache: { body: '#34d399', belly: '#fef3c7', dark: '#064e3b', extra: '#fbbf24' },
+    geist: { body: '#ddd6fe', belly: '#f5f3ff', dark: '#4c1d95', extra: '#c4b5fd' }
+  };
+  const WEAK = { feuer: 'wasser', wasser: 'pflanze', pflanze: 'feuer', blitz: 'kampf', kampf: 'psycho', psycho: 'geist', geist: 'blitz', drache: 'geist' };
+  const RESIST = { feuer: 'pflanze', wasser: 'feuer', pflanze: 'wasser', blitz: 'geist', kampf: 'blitz', psycho: 'kampf', geist: 'psycho', drache: 'feuer' };
+  const PLACE = { feuer: 'Gluttal', wasser: 'Riff', pflanze: 'Mooswald', blitz: 'Gewitterfeld', psycho: 'Traumnebel', kampf: 'Ringplatz', drache: 'Drachenpass', geist: 'Mondbruch' };
+  const ILLUS = ['Lina Velor', 'Marek Solun', 'Sera Korin', 'Arno Thal', 'Nila Borun', 'Ivo Quen', 'Tabea Rask', 'Jonas Helv'];
+
+  function svgEl(name, attrs, parent) {
+    const node = document.createElementNS(NS, name);
+    if (attrs) Object.keys(attrs).forEach((key) => node.setAttribute(key, String(attrs[key])));
+    if (parent) parent.appendChild(node);
+    return node;
+  }
+
+  function drawCreature(parent, card, cx, cy, scale) {
+    const paint = PAINT[card.type];
+    const g = svgEl('g', { transform: 'translate(' + cx + ' ' + cy + ') scale(' + scale + ')' }, parent);
+    const look = (hash(card.id) % 5) - 2;
+    svgEl('ellipse', { cx: 2, cy: 48, rx: 30, ry: 8, fill: 'rgba(0,0,0,.28)' }, g);
+    if (card.type === 'feuer' || card.type === 'drache' || card.type === 'wasser') {
+      svgEl('path', { d: 'M-6 12 C -36 8 -52 -8 -46 -22 C -28 0 -12 16 -4 20 Z', fill: card.type === 'feuer' ? '#fb923c' : paint.dark }, g);
     }
-    const motif = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    motif.setAttribute('x', '80');
-    motif.setAttribute('y', '68');
-    motif.setAttribute('text-anchor', 'middle');
-    motif.setAttribute('font-size', '46');
-    motif.textContent = card.emoji;
-    svg.appendChild(motif);
-    return svg;
+    if (card.type === 'geist') {
+      svgEl('ellipse', { cx: -22, cy: 4, rx: 10, ry: 16, fill: paint.extra, opacity: '0.65' }, g);
+      svgEl('ellipse', { cx: 22, cy: 8, rx: 9, ry: 14, fill: paint.extra, opacity: '0.65' }, g);
+    }
+    if (card.type === 'drache' || card.type === 'pflanze' || card.type === 'geist') {
+      svgEl('path', { d: 'M-4 -6 C -40 -42 -58 -8 -16 12 Z', fill: paint.extra }, g);
+      svgEl('path', { d: 'M4 -6 C 40 -42 58 -8 16 12 Z', fill: paint.dark, opacity: '0.85' }, g);
+    }
+    if (card.type === 'wasser') {
+      svgEl('path', { d: 'M-18 -2 C -40 -16 -42 10 -16 12 Z', fill: paint.extra }, g);
+      svgEl('path', { d: 'M18 -2 C 40 -16 42 10 16 12 Z', fill: paint.extra }, g);
+    }
+    svgEl('ellipse', { cx: 0, cy: 10, rx: 28, ry: 22, fill: paint.body }, g);
+    svgEl('ellipse', { cx: 1, cy: 14, rx: 16, ry: 13, fill: paint.belly }, g);
+    svgEl('ellipse', { cx: -16, cy: 28, rx: 8, ry: 5, fill: paint.dark }, g);
+    svgEl('ellipse', { cx: 16, cy: 28, rx: 8, ry: 5, fill: paint.dark }, g);
+    svgEl('circle', { cx: 4, cy: -16, r: 17, fill: paint.body }, g);
+    svgEl('ellipse', { cx: 2, cy: -12, rx: 8, ry: 6, fill: paint.belly }, g);
+    if (card.type === 'feuer' || card.type === 'drache' || card.type === 'kampf') {
+      svgEl('polygon', { points: '-6,-28 -2,-50 2,-28', fill: paint.dark }, g);
+      svgEl('polygon', { points: '10,-26 16,-46 8,-24', fill: paint.dark }, g);
+    } else if (card.type === 'pflanze') {
+      svgEl('ellipse', { cx: -8, cy: -34, rx: 7, ry: 12, fill: paint.extra }, g);
+      svgEl('ellipse', { cx: 12, cy: -32, rx: 6, ry: 11, fill: paint.dark }, g);
+    } else if (card.type === 'blitz') {
+      svgEl('polygon', { points: '6,-30 14,-16 4,-18 16,-2', fill: paint.extra }, g);
+      svgEl('circle', { cx: -12, cy: -30, r: 4, fill: paint.dark }, g);
+    } else if (card.type === 'psycho') {
+      svgEl('circle', { cx: 4, cy: -36, r: 5.5, fill: paint.extra }, g);
+      svgEl('circle', { cx: 4, cy: -36, r: 2.2, fill: '#fff' }, g);
+    }
+    svgEl('ellipse', { cx: -4, cy: -16, rx: 5, ry: 5.5, fill: '#fff' }, g);
+    svgEl('ellipse', { cx: 12, cy: -16, rx: 5, ry: 5.5, fill: '#fff' }, g);
+    svgEl('circle', { cx: -3 + look, cy: -15, r: 2.3, fill: paint.dark }, g);
+    svgEl('circle', { cx: 13 + look, cy: -15, r: 2.3, fill: paint.dark }, g);
+    svgEl('circle', { cx: -2.2 + look, cy: -16.2, r: 0.8, fill: '#fff' }, g);
+    svgEl('circle', { cx: 13.8 + look, cy: -16.2, r: 0.8, fill: '#fff' }, g);
+    svgEl('path', { d: 'M-1 -8 Q 5 -4 11 -8', fill: 'none', stroke: paint.dark, 'stroke-width': 1.3, 'stroke-linecap': 'round' }, g);
+    svgEl('ellipse', { cx: -6, cy: 2, rx: 9, ry: 5, fill: 'rgba(255,255,255,.3)' }, g);
+  }
+
+  function drawScene(svg, card) {
+    const gid = 'sc' + hash(card.id).toString(16);
+    const defs = svgEl('defs', null, svg);
+    const sky = svgEl('linearGradient', { id: gid, x1: '0', y1: '0', x2: '0', y2: '1' }, defs);
+    const skyColors = {
+      feuer: ['#fb923c', '#7f1d1d'],
+      wasser: ['#7dd3fc', '#075985'],
+      pflanze: ['#bbf7d0', '#166534'],
+      blitz: ['#64748b', '#1e293b'],
+      psycho: ['#581c87', '#1e1b4b'],
+      kampf: ['#fdba74', '#9a3412'],
+      drache: ['#312e81', '#111827'],
+      geist: ['#1e1b4b', '#312e81']
+    }[card.type];
+    svgEl('stop', { offset: '0%', 'stop-color': skyColors[0] }, sky);
+    svgEl('stop', { offset: '100%', 'stop-color': skyColors[1] }, sky);
+    svgEl('rect', { width: '240', height: '168', fill: 'url(#' + gid + ')' }, svg);
+    if (card.type === 'feuer') {
+      svgEl('polygon', { points: '20,150 90,48 150,150', fill: '#44403c' }, svg);
+      svgEl('polygon', { points: '70,150 130,70 190,150', fill: '#292524' }, svg);
+      svgEl('ellipse', { cx: '120', cy: '148', rx: '70', ry: '16', fill: '#ef4444' }, svg);
+      svgEl('ellipse', { cx: '120', cy: '146', rx: '40', ry: '8', fill: '#fde047' }, svg);
+    } else if (card.type === 'wasser') {
+      svgEl('path', { d: 'M0 110 Q 40 90 80 110 T 160 110 T 240 110 V 168 H 0 Z', fill: '#0369a1' }, svg);
+      svgEl('path', { d: 'M0 128 Q 50 112 100 128 T 200 128 T 280 128 V 168 H 0 Z', fill: '#0ea5e9' }, svg);
+      svgEl('circle', { cx: '40', cy: '40', r: '16', fill: '#fef9c3' }, svg);
+    } else if (card.type === 'pflanze') {
+      svgEl('circle', { cx: '190', cy: '36', r: '18', fill: '#fde047' }, svg);
+      svgEl('rect', { x: '0', y: '120', width: '240', height: '48', fill: '#166534' }, svg);
+      svgEl('polygon', { points: '30,120 52,62 74,120', fill: '#14532d' }, svg);
+      svgEl('polygon', { points: '150,120 178,48 206,120', fill: '#052e16' }, svg);
+    } else if (card.type === 'blitz') {
+      svgEl('ellipse', { cx: '60', cy: '40', rx: '40', ry: '18', fill: '#334155' }, svg);
+      svgEl('ellipse', { cx: '120', cy: '34', rx: '50', ry: '20', fill: '#1e293b' }, svg);
+      svgEl('polygon', { points: '150,20 132,70 156,70 140,120', fill: '#fde047' }, svg);
+    } else if (card.type === 'psycho' || card.type === 'drache') {
+      for (let i = 0; i < 8; i++) {
+        const x = 16 + ((hash(card.id + i) % 210));
+        const y = 12 + ((hash(card.id + 's' + i) % 80));
+        svgEl('circle', { cx: x, cy: y, r: 1.2 + (i % 3), fill: '#fff' }, svg);
+      }
+      svgEl('ellipse', { cx: '120', cy: '70', rx: '70', ry: '28', fill: card.type === 'drache' ? 'rgba(251,191,36,.25)' : 'rgba(232,121,249,.35)' }, svg);
+    } else if (card.type === 'kampf') {
+      svgEl('circle', { cx: '180', cy: '40', r: '22', fill: '#fde047' }, svg);
+      svgEl('rect', { x: '0', y: '118', width: '240', height: '50', fill: '#78350f' }, svg);
+    } else {
+      svgEl('circle', { cx: '170', cy: '42', r: '22', fill: '#f8fafc' }, svg);
+      svgEl('ellipse', { cx: '80', cy: '120', rx: '70', ry: '18', fill: 'rgba(226,232,240,.35)' }, svg);
+      svgEl('ellipse', { cx: '150', cy: '132', rx: '60', ry: '14', fill: 'rgba(226,232,240,.25)' }, svg);
+    }
+    if (card.rarity === 'mythic') {
+      for (let i = 0; i < 14; i++) {
+        svgEl('circle', {
+          cx: (hash(card.id + 'm' + i) % 230) + 5,
+          cy: (hash(card.id + 'n' + i) % 150) + 6,
+          r: 1 + (i % 2),
+          fill: i % 2 ? '#fde047' : '#fff'
+        }, svg);
+      }
+    }
+    drawCreature(svg, card, card.alt ? 132 : 120, 92, card.rarity === 'mythic' ? 1.15 : 1);
+  }
+
+  function pip(type, small) {
+    const node = document.createElement('i');
+    node.className = 'pip pip-' + type + (small ? ' pip-sm' : '');
+    node.title = TYPES[type] ? TYPES[type].name : 'Neutral';
+    node.textContent = type === 'neutral' ? '◆' : TYPES[type].name.slice(0, 1);
+    return node;
+  }
+
+  function attacksOf(card) {
+    const names = ATK[card.type];
+    const mainIndex = hash(card.id) % names.length;
+    const second = { name: names[mainIndex], damage: card.damage, cost: [card.type, card.type] };
+    if (card.stage <= 1 && card.rarity !== 'mythic') {
+      second.cost = [card.type];
+      return [second];
+    }
+    const first = {
+      name: names[(mainIndex + 2) % names.length],
+      damage: Math.max(10, card.damage - 35),
+      cost: [card.type]
+    };
+    if (card.stage >= 3 || card.rarity === 'mythic' || card.alt) second.cost = [card.type, card.type, 'neutral'];
+    return [first, second];
+  }
+
+  function flavor(card) {
+    const place = PLACE[card.type];
+    const lines = [
+      card.name + ' durchstreift das ' + place + '.',
+      'Im ' + place + ' erzählt man sich von ' + card.name + '.',
+      card.name + ' ruht nur, wenn der Wind dreht.'
+    ];
+    return lines[hash(card.id) % lines.length];
+  }
+
+  function numberLine(card) {
+    if (card.rarity === 'mythic') {
+      const myths = SET.filter((entry) => entry.rarity === 'mythic');
+      const index = myths.indexOf(card) + 1;
+      return 'M' + String(index).padStart(2, '0') + '/' + String(myths.length).padStart(2, '0');
+    }
+    return String(SET.indexOf(card) + 1).padStart(3, '0') + '/' + SET.length;
+  }
+
+  function rarityMark(card) {
+    const stars = Math.min(RARITIES[card.rarity].rank, 5);
+    return '★'.repeat(Math.max(1, stars));
   }
 
   function stageLabel(card) {
@@ -411,39 +541,143 @@
 
   function faceNode(card, count) {
     const root = document.createElement('article');
-    root.className = 'tc rarity-' + card.rarity + ' tc-tilt';
+    root.className = 'tc tc-full rarity-' + card.rarity + ' tc-tilt';
     if (isHoloPlus(card.rarity)) root.classList.add('holo');
-    root.style.setProperty('--ta', TYPES[card.type].a);
-    root.style.setProperty('--tb', TYPES[card.type].b);
+    if (card.alt) root.classList.add('bleed');
+    if (RARITIES[card.rarity].rank >= 4) root.classList.add('foil-full');
     root.dataset.card = card.id;
-    const top = document.createElement('div');
-    top.className = 'tc-top';
+    const frame = document.createElement('div');
+    frame.className = 'tc-frame';
+
+    const bar = document.createElement('header');
+    bar.className = 'tc-namebar';
+    const evo = document.createElement('div');
+    evo.className = 'tc-evo';
+    if (card.evolvesFrom && BY_ID[card.evolvesFrom]) {
+      const mini = svgEl('svg', { viewBox: '0 0 80 64', class: 'evo-svg' });
+      svgEl('rect', { width: 80, height: 64, fill: TYPES[BY_ID[card.evolvesFrom].type].a }, mini);
+      drawCreature(mini, BY_ID[card.evolvesFrom], 40, 36, 0.42);
+      evo.appendChild(mini);
+    }
+    const stage = document.createElement('span');
+    stage.textContent = stageLabel(card);
+    evo.appendChild(stage);
     const name = document.createElement('b');
+    name.className = 'tc-name';
     name.textContent = card.name;
-    const hp = document.createElement('span');
-    hp.textContent = card.hp + ' KP';
-    top.append(name, hp);
-    const wrap = document.createElement('div');
-    wrap.className = 'tc-art-wrap';
-    wrap.appendChild(artNode(card));
-    const type = document.createElement('div');
-    type.className = 'tc-type';
-    type.textContent = TYPES[card.type].name + ' · ' + stageLabel(card);
-    const attack = document.createElement('div');
-    attack.className = 'tc-attack';
-    const atk = document.createElement('span');
-    atk.textContent = card.attack;
-    const dmg = document.createElement('b');
-    dmg.textContent = String(card.damage);
-    attack.append(atk, dmg);
-    const rarity = document.createElement('div');
-    rarity.className = 'tc-rarity';
-    rarity.textContent = RARITIES[card.rarity].name + (count > 1 ? ' · ×' + count : '');
-    const shine = document.createElement('div');
-    shine.className = 'tc-shine';
-    root.append(top, wrap, type, attack, rarity, shine);
+    const hp = document.createElement('div');
+    hp.className = 'tc-hp';
+    hp.append(document.createTextNode(card.hp + ' KP'), pip(card.type, true));
+    bar.append(evo, name, hp);
+
+    const window = document.createElement('div');
+    window.className = 'tc-window';
+    const scene = svgEl('svg', { viewBox: '0 0 240 168', class: 'tc-scene', preserveAspectRatio: 'xMidYMid slice' });
+    drawScene(scene, card);
+    window.appendChild(scene);
+    const foil = document.createElement('div');
+    foil.className = 'tc-foil';
+    window.appendChild(foil);
+    if (RARITIES[card.rarity].rank >= 4) {
+      const sparks = document.createElement('div');
+      sparks.className = 'tc-sparks';
+      for (let i = 0; i < 6; i++) {
+        const dot = document.createElement('i');
+        dot.style.left = (10 + (hash(card.id + i) % 78)) + '%';
+        dot.style.top = (12 + (hash(card.id + 'y' + i) % 70)) + '%';
+        sparks.appendChild(dot);
+      }
+      window.appendChild(sparks);
+    }
+
+    const attacks = document.createElement('div');
+    attacks.className = 'tc-attacks';
+    attacksOf(card).forEach((attack) => {
+      const row = document.createElement('div');
+      row.className = 'atk';
+      const costs = document.createElement('span');
+      costs.className = 'costs';
+      attack.cost.forEach((cost) => costs.appendChild(pip(cost, true)));
+      const label = document.createElement('span');
+      label.className = 'atk-name';
+      label.textContent = attack.name;
+      const dmg = document.createElement('b');
+      dmg.textContent = String(attack.damage);
+      row.append(costs, label, dmg);
+      attacks.appendChild(row);
+    });
+
+    const flavorText = document.createElement('p');
+    flavorText.className = 'tc-flavor';
+    flavorText.textContent = flavor(card);
+
+    const stats = document.createElement('div');
+    stats.className = 'tc-battle';
+    [['Schwäche', WEAK[card.type]], ['Resistenz', RESIST[card.type]]].forEach((pair) => {
+      const cell = document.createElement('span');
+      cell.append(document.createTextNode(pair[0] + ' '), pip(pair[1], true));
+      stats.appendChild(cell);
+    });
+    const retreat = document.createElement('span');
+    retreat.append(document.createTextNode('Rückzug '));
+    const retreatCost = card.rarity === 'mythic' ? 2 : Math.min(3, card.stage || 1);
+    for (let i = 0; i < retreatCost; i++) retreat.appendChild(pip('neutral', true));
+    stats.appendChild(retreat);
+
+    const meta = document.createElement('div');
+    meta.className = 'tc-foot';
+    const illus = document.createElement('span');
+    illus.textContent = 'Illus. ' + ILLUS[hash(card.id) % ILLUS.length];
+    const num = document.createElement('span');
+    num.textContent = numberLine(card) + ' ' + rarityMark(card) + (count > 1 ? ' ×' + count : '');
+    meta.append(illus, num);
+
+    frame.append(bar, window, attacks, flavorText, stats, meta);
+    if (RARITIES[card.rarity].rank >= 4) {
+      const glint = document.createElement('div');
+      glint.className = 'tc-glint';
+      frame.appendChild(glint);
+    }
+    root.appendChild(frame);
     bindTilt(root);
     return root;
+  }
+
+  function cardBack() {
+    const wrap = document.createElement('div');
+    wrap.className = 'flip-back';
+    const gid = 'bg' + hash(String(Math.random())).toString(16);
+    const svg = svgEl('svg', { viewBox: '0 0 200 280', class: 'back-svg' });
+    const defs = svgEl('defs', null, svg);
+    const gold = svgEl('linearGradient', { id: gid, x1: '0', y1: '0', x2: '1', y2: '1' }, defs);
+    svgEl('stop', { offset: '0%', 'stop-color': '#fde68a' }, gold);
+    svgEl('stop', { offset: '50%', 'stop-color': '#b45309' }, gold);
+    svgEl('stop', { offset: '100%', 'stop-color': '#fde68a' }, gold);
+    svgEl('rect', { width: 200, height: 280, rx: 16, fill: '#14081f' }, svg);
+    svgEl('rect', { x: 8, y: 8, width: 184, height: 264, rx: 12, fill: 'none', stroke: 'url(#' + gid + ')', 'stroke-width': 4 }, svg);
+    svgEl('rect', { x: 16, y: 16, width: 168, height: 248, rx: 8, fill: 'none', stroke: '#7c2d12', 'stroke-width': 2 }, svg);
+    for (let y = 0; y < 6; y++) {
+      for (let x = 0; x < 4; x++) {
+        svgEl('rect', { x: 36 + x * 34, y: 40 + y * 34, width: 16, height: 16, transform: 'rotate(45 ' + (44 + x * 34) + ' ' + (48 + y * 34) + ')', fill: 'rgba(253,224,71,.16)' }, svg);
+      }
+    }
+    svgEl('circle', { cx: 100, cy: 132, r: 36, fill: 'none', stroke: 'url(#' + gid + ')', 'stroke-width': 4 }, svg);
+    svgEl('polygon', { points: '100,104 112,128 138,132 118,150 124,176 100,162 76,176 82,150 62,132 88,128', fill: '#fde047' }, svg);
+    const title = svgEl('text', { x: 100, y: 230, 'text-anchor': 'middle', fill: '#fde68a', 'font-size': 16, 'font-family': 'sans-serif' }, svg);
+    title.textContent = 'MONSTER';
+    wrap.appendChild(svg);
+    return wrap;
+  }
+
+  function thumbArt(card, owned) {
+    const svg = svgEl('svg', { viewBox: '0 0 80 56', class: 'thumb-svg' });
+    svgEl('rect', { width: 80, height: 56, rx: 8, fill: owned ? TYPES[card.type].a : '#1f1630' }, svg);
+    if (owned) drawCreature(svg, card, 40, 30, 0.48);
+    else {
+      const mark = svgEl('text', { x: 40, y: 36, 'text-anchor': 'middle', fill: '#a89bb8', 'font-size': 22 }, svg);
+      mark.textContent = '?';
+    }
+    return svg;
   }
 
   function bindTilt(el) {
@@ -524,9 +758,7 @@
       button.className = 'flipper' + (revealed[index] ? ' revealed' : '') + (revealed[index] && card.rarity === 'mythic' ? ' spotlight' : '');
       const inner = document.createElement('div');
       inner.className = 'flip-inner';
-      const back = document.createElement('div');
-      back.className = 'flip-back';
-      back.textContent = '★';
+      const back = cardBack();
       const front = document.createElement('div');
       front.className = 'flip-front';
       const bag = C.state.cardBag();
@@ -686,7 +918,7 @@
     button.style.setProperty('--tb', TYPES[card.type].b);
     const art = document.createElement('div');
     art.className = 'mini-art';
-    art.textContent = count ? card.emoji : '❔';
+    art.appendChild(thumbArt(card, count > 0));
     const name = document.createElement('b');
     name.textContent = card.name;
     const meta = document.createElement('span');

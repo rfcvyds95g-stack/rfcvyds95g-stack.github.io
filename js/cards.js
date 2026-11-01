@@ -350,20 +350,6 @@
   }
 
   const NS = 'http://www.w3.org/2000/svg';
-  const PAINT = {
-    feuer: { body: '#e25822', belly: '#ffd7a8', dark: '#7c2d12', extra: '#fde047' },
-    wasser: { body: '#3b82f6', belly: '#e0f2fe', dark: '#0c4a6e', extra: '#67e8f9' },
-    pflanze: { body: '#22c55e', belly: '#ecfccb', dark: '#14532d', extra: '#86efac' },
-    blitz: { body: '#f59e0b', belly: '#fef3c7', dark: '#78350f', extra: '#fde047' },
-    psycho: { body: '#c084fc', belly: '#fae8ff', dark: '#581c87', extra: '#f0abfc' },
-    kampf: { body: '#f87171', belly: '#fee2e2', dark: '#7f1d1d', extra: '#fecaca' },
-    drache: { body: '#34d399', belly: '#fef3c7', dark: '#064e3b', extra: '#fbbf24' },
-    geist: { body: '#ddd6fe', belly: '#f5f3ff', dark: '#4c1d95', extra: '#c4b5fd' }
-  };
-  const WEAK = { feuer: 'wasser', wasser: 'pflanze', pflanze: 'feuer', blitz: 'kampf', kampf: 'psycho', psycho: 'geist', geist: 'blitz', drache: 'geist' };
-  const RESIST = { feuer: 'pflanze', wasser: 'feuer', pflanze: 'wasser', blitz: 'geist', kampf: 'blitz', psycho: 'kampf', geist: 'psycho', drache: 'feuer' };
-  const PLACE = { feuer: 'Gluttal', wasser: 'Riff', pflanze: 'Mooswald', blitz: 'Gewitterfeld', psycho: 'Traumnebel', kampf: 'Ringplatz', drache: 'Drachenpass', geist: 'Mondbruch' };
-  const ILLUS = ['Lina Velor', 'Marek Solun', 'Sera Korin', 'Arno Thal', 'Nila Borun', 'Ivo Quen', 'Tabea Rask', 'Jonas Helv'];
 
   function svgEl(name, attrs, parent) {
     const node = document.createElementNS(NS, name);
@@ -372,308 +358,338 @@
     return node;
   }
 
-  function drawCreature(parent, card, cx, cy, scale) {
+  const PAINT = {
+    feuer: { body: '#ea580c', belly: '#ffedd5', dark: '#7c2d12', mid: '#c2410c', hot: '#fde047' },
+    wasser: { body: '#0284c7', belly: '#e0f2fe', dark: '#0c4a6e', mid: '#0369a1', hot: '#7dd3fc' },
+    pflanze: { body: '#16a34a', belly: '#ecfccb', dark: '#14532d', mid: '#166534', hot: '#86efac' },
+    blitz: { body: '#f59e0b', belly: '#fef3c7', dark: '#78350f', mid: '#d97706', hot: '#fde047' },
+    psycho: { body: '#a855f7', belly: '#fae8ff', dark: '#581c87', mid: '#7e22ce', hot: '#e9d5ff' },
+    kampf: { body: '#ef4444', belly: '#fee2e2', dark: '#7f1d1d', mid: '#b91c1c', hot: '#fecaca' },
+    drache: { body: '#0f766e', belly: '#fef3c7', dark: '#134e4a', mid: '#115e59', hot: '#fbbf24' },
+    geist: { body: '#c4b5fd', belly: '#f5f3ff', dark: '#4c1d95', mid: '#6d28d9', hot: '#ddd6fe' }
+  };
+  const WEAK = { feuer: 'wasser', wasser: 'pflanze', pflanze: 'feuer', blitz: 'kampf', kampf: 'psycho', psycho: 'geist', geist: 'blitz', drache: 'geist' };
+  const RESIST = { feuer: 'pflanze', wasser: 'feuer', pflanze: 'wasser', blitz: 'geist', kampf: 'blitz', psycho: 'kampf', geist: 'psycho', drache: 'feuer' };
+  const SPECIES = { feuer: 'Flammenwesen', wasser: 'Riffwesen', pflanze: 'Waldwesen', blitz: 'Sturmwesen', psycho: 'Traumwesen', kampf: 'Ringwesen', drache: 'Drachenwesen', geist: 'Nebelwesen' };
+  const EFFECT = {
+    feuer: 'Lege 1 Feuer-Energie ab. Das gegnerische Monster ist verbrannt.',
+    wasser: 'Das gegnerische Monster wird fortgespült und setzt einmal aus.',
+    pflanze: 'Heilwurzeln heilen dieses Monster um 20 KP.',
+    blitz: 'Wirf eine Münze. Bei Kopf ist das gegnerische Monster gelähmt.',
+    psycho: 'Das gegnerische Monster schläft.',
+    kampf: 'Dieser Angriff trifft auch Monster auf der Bank für 20 Schaden.',
+    drache: 'Wirf eine Münze. Bei Zahl hat dieser Angriff keinen Effekt.',
+    geist: 'Lege 1 Energie ab. Das gegnerische Monster ist verwirrt.'
+  };
+
+  function drawBeast(svg, card, gid) {
     const paint = PAINT[card.type];
-    const g = svgEl('g', { transform: 'translate(' + cx + ' ' + cy + ') scale(' + scale + ')' }, parent);
-    const look = (hash(card.id) % 5) - 2;
-    svgEl('ellipse', { cx: 2, cy: 48, rx: 30, ry: 8, fill: 'rgba(0,0,0,.28)' }, g);
-    if (card.type === 'feuer' || card.type === 'drache' || card.type === 'wasser') {
-      svgEl('path', { d: 'M-6 12 C -36 8 -52 -8 -46 -22 C -28 0 -12 16 -4 20 Z', fill: card.type === 'feuer' ? '#fb923c' : paint.dark }, g);
+    const bodyId = gid + 'body';
+    const bellyId = gid + 'belly';
+    const fireId = gid + 'fire';
+    const defs = svg.querySelector('defs') || svgEl('defs', null, svg);
+    const body = svgEl('linearGradient', { id: bodyId, x1: '0', y1: '0', x2: '1', y2: '1' }, defs);
+    svgEl('stop', { offset: '0%', 'stop-color': paint.hot }, body);
+    svgEl('stop', { offset: '55%', 'stop-color': paint.body }, body);
+    svgEl('stop', { offset: '100%', 'stop-color': paint.dark }, body);
+    const belly = svgEl('linearGradient', { id: bellyId, x1: '0', y1: '0', x2: '0', y2: '1' }, defs);
+    svgEl('stop', { offset: '0%', 'stop-color': '#fff' }, belly);
+    svgEl('stop', { offset: '100%', 'stop-color': paint.belly }, belly);
+    const flame = svgEl('radialGradient', { id: fireId, cx: '0.5', cy: '0.8', r: '0.7' }, defs);
+    svgEl('stop', { offset: '0%', 'stop-color': '#fff' }, flame);
+    svgEl('stop', { offset: '35%', 'stop-color': paint.hot }, flame);
+    svgEl('stop', { offset: '100%', 'stop-color': paint.body, 'stop-opacity': '0' }, flame);
+    const g = svgEl('g', { transform: 'translate(148 118)' }, svg);
+    svgEl('ellipse', { cx: 8, cy: 48, rx: 54, ry: 10, fill: 'rgba(0,0,0,.35)' }, g);
+    const stroke = { stroke: paint.dark, 'stroke-width': 1.6, 'stroke-linejoin': 'round' };
+    svgEl('path', Object.assign({ d: 'M-18 6 Q-78 18 -96 -8 Q-70 8 -22 16 Z', fill: 'url(#' + bodyId + ')' }, stroke), g);
+    if (card.type === 'feuer' || card.type === 'drache') {
+      svgEl('path', { d: 'M-90 -6 Q-118 -28 -96 -48 Q-100 -20 -78 -8 Q-92 -24 -70 -36 Q-74 -12 -62 0 Z', fill: 'url(#' + fireId + ')' }, g);
+    } else if (card.type === 'wasser') {
+      svgEl('path', { d: 'M-78 0 Q-110 -16 -96 16 Q-88 6 -70 10 Z', fill: paint.hot, stroke: paint.dark }, g);
+    } else if (card.type === 'blitz') {
+      svgEl('polygon', { points: '-70,8 -96,-20 -78,-8 -104,-36 -62,-6', fill: paint.hot, stroke: paint.dark }, g);
+    } else if (card.type === 'pflanze') {
+      svgEl('ellipse', { cx: -78, cy: -8, rx: 14, ry: 8, fill: paint.hot, stroke: paint.dark }, g);
+    }
+    svgEl('path', Object.assign({ d: 'M-6 18 L-16 46 L4 46 L8 18 Z', fill: paint.mid }, stroke), g);
+    svgEl('path', Object.assign({ d: 'M28 18 L24 46 L46 46 L48 16 Z', fill: paint.mid }, stroke), g);
+    svgEl('path', { d: 'M-16 46 l4 -6 l4 6 M-6 46 l4 -6 l4 6 M24 46 l4 -6 l4 6 M36 46 l4 -6 l4 6', fill: paint.belly }, g);
+    svgEl('ellipse', Object.assign({ cx: 16, cy: 2, rx: 46, ry: 30, fill: 'url(#' + bodyId + ')' }, stroke), g);
+    svgEl('ellipse', { cx: 24, cy: 8, rx: 24, ry: 18, fill: 'url(#' + bellyId + ')' }, g);
+    if (card.stage >= 2 || card.rarity === 'mythic') {
+      svgEl('path', Object.assign({ d: 'M8 -8 Q-20 -62 -62 -48 Q-28 -36 -24 -18 Q-8 -28 0 -8 Q8 -20 20 -6 Z', fill: paint.mid, opacity: '0.95' }, stroke), g);
+    }
+    if (card.stage >= 3 || card.alt || card.rarity === 'mythic') {
+      svgEl('path', { d: 'M-8 -16 l-8 -22 l16 12 z M6 -24 l-2 -24 l14 16 z M20 -26 l4 -22 l10 18 z', fill: paint.hot, stroke: paint.dark }, g);
+    }
+    svgEl('path', Object.assign({ d: 'M40 -6 Q62 -34 92 -24 L104 -6 Q78 0 52 10 Z', fill: 'url(#' + bodyId + ')' }, stroke), g);
+    svgEl('path', Object.assign({ d: 'M78 -22 Q108 -30 132 -8 Q136 2 118 8 L96 6 Q82 -4 78 -14 Z', fill: 'url(#' + bodyId + ')' }, stroke), g);
+    svgEl('path', Object.assign({ d: 'M104 2 L128 4 Q132 12 120 14 L100 10 Z', fill: paint.belly }, stroke), g);
+    svgEl('path', { d: 'M108 4 l3 5 l3 -5 M116 4 l3 5 l3 -5 M124 4 l3 5 l3 -5', fill: '#fff', stroke: paint.dark, 'stroke-width': 0.6 }, g);
+    svgEl('polygon', { points: '86,-28 74,-52 96,-24', fill: paint.hot, stroke: paint.dark }, g);
+    svgEl('polygon', { points: '98,-30 96,-54 112,-26', fill: paint.hot, stroke: paint.dark }, g);
+    svgEl('ellipse', { cx: 108, cy: -12, rx: 7, ry: 6, fill: '#fef9c3' }, g);
+    svgEl('ellipse', { cx: 110, cy: -12, rx: 2.6, ry: 4.2, fill: '#111' }, g);
+    svgEl('circle', { cx: 108.5, cy: -14, r: 1.3, fill: '#fff' }, g);
+    svgEl('path', { d: 'M96 -18 L124 -16', stroke: paint.dark, 'stroke-width': 2, 'stroke-linecap': 'round' }, g);
+    if (card.type === 'feuer' || card.type === 'drache') {
+      svgEl('path', { d: 'M128 -2 Q168 -12 210 8 L210 36 Q160 16 128 8 Z', fill: 'url(#' + fireId + ')', opacity: '0.9' }, g);
+    } else if (card.type === 'wasser') {
+      svgEl('path', { d: 'M120 8 Q150 0 168 16 Q150 12 124 18 Z', fill: paint.hot, opacity: '0.8' }, g);
+    } else if (card.type === 'psycho') {
+      svgEl('circle', { cx: 96, cy: -36, r: 6, fill: paint.hot, stroke: '#fff' }, g);
+      svgEl('circle', { cx: 96, cy: -36, r: 2.4, fill: '#fff' }, g);
     }
     if (card.type === 'geist') {
-      svgEl('ellipse', { cx: -22, cy: 4, rx: 10, ry: 16, fill: paint.extra, opacity: '0.65' }, g);
-      svgEl('ellipse', { cx: 22, cy: 8, rx: 9, ry: 14, fill: paint.extra, opacity: '0.65' }, g);
+      svgEl('ellipse', { cx: 20, cy: 8, rx: 18, ry: 22, fill: paint.hot, opacity: '0.35' }, g);
     }
-    if (card.type === 'drache' || card.type === 'pflanze' || card.type === 'geist') {
-      svgEl('path', { d: 'M-4 -6 C -40 -42 -58 -8 -16 12 Z', fill: paint.extra }, g);
-      svgEl('path', { d: 'M4 -6 C 40 -42 58 -8 16 12 Z', fill: paint.dark, opacity: '0.85' }, g);
-    }
-    if (card.type === 'wasser') {
-      svgEl('path', { d: 'M-18 -2 C -40 -16 -42 10 -16 12 Z', fill: paint.extra }, g);
-      svgEl('path', { d: 'M18 -2 C 40 -16 42 10 16 12 Z', fill: paint.extra }, g);
-    }
-    svgEl('ellipse', { cx: 0, cy: 10, rx: 28, ry: 22, fill: paint.body }, g);
-    svgEl('ellipse', { cx: 1, cy: 14, rx: 16, ry: 13, fill: paint.belly }, g);
-    svgEl('ellipse', { cx: -16, cy: 28, rx: 8, ry: 5, fill: paint.dark }, g);
-    svgEl('ellipse', { cx: 16, cy: 28, rx: 8, ry: 5, fill: paint.dark }, g);
-    svgEl('circle', { cx: 4, cy: -16, r: 17, fill: paint.body }, g);
-    svgEl('ellipse', { cx: 2, cy: -12, rx: 8, ry: 6, fill: paint.belly }, g);
-    if (card.type === 'feuer' || card.type === 'drache' || card.type === 'kampf') {
-      svgEl('polygon', { points: '-6,-28 -2,-50 2,-28', fill: paint.dark }, g);
-      svgEl('polygon', { points: '10,-26 16,-46 8,-24', fill: paint.dark }, g);
-    } else if (card.type === 'pflanze') {
-      svgEl('ellipse', { cx: -8, cy: -34, rx: 7, ry: 12, fill: paint.extra }, g);
-      svgEl('ellipse', { cx: 12, cy: -32, rx: 6, ry: 11, fill: paint.dark }, g);
-    } else if (card.type === 'blitz') {
-      svgEl('polygon', { points: '6,-30 14,-16 4,-18 16,-2', fill: paint.extra }, g);
-      svgEl('circle', { cx: -12, cy: -30, r: 4, fill: paint.dark }, g);
-    } else if (card.type === 'psycho') {
-      svgEl('circle', { cx: 4, cy: -36, r: 5.5, fill: paint.extra }, g);
-      svgEl('circle', { cx: 4, cy: -36, r: 2.2, fill: '#fff' }, g);
-    }
-    svgEl('ellipse', { cx: -4, cy: -16, rx: 5, ry: 5.5, fill: '#fff' }, g);
-    svgEl('ellipse', { cx: 12, cy: -16, rx: 5, ry: 5.5, fill: '#fff' }, g);
-    svgEl('circle', { cx: -3 + look, cy: -15, r: 2.3, fill: paint.dark }, g);
-    svgEl('circle', { cx: 13 + look, cy: -15, r: 2.3, fill: paint.dark }, g);
-    svgEl('circle', { cx: -2.2 + look, cy: -16.2, r: 0.8, fill: '#fff' }, g);
-    svgEl('circle', { cx: 13.8 + look, cy: -16.2, r: 0.8, fill: '#fff' }, g);
-    svgEl('path', { d: 'M-1 -8 Q 5 -4 11 -8', fill: 'none', stroke: paint.dark, 'stroke-width': 1.3, 'stroke-linecap': 'round' }, g);
-    svgEl('ellipse', { cx: -6, cy: 2, rx: 9, ry: 5, fill: 'rgba(255,255,255,.3)' }, g);
   }
 
   function drawScene(svg, card) {
     const gid = 'sc' + hash(card.id).toString(16);
     const defs = svgEl('defs', null, svg);
     const sky = svgEl('linearGradient', { id: gid, x1: '0', y1: '0', x2: '0', y2: '1' }, defs);
-    const skyColors = {
-      feuer: ['#fb923c', '#7f1d1d'],
-      wasser: ['#7dd3fc', '#075985'],
-      pflanze: ['#bbf7d0', '#166534'],
-      blitz: ['#64748b', '#1e293b'],
-      psycho: ['#581c87', '#1e1b4b'],
-      kampf: ['#fdba74', '#9a3412'],
-      drache: ['#312e81', '#111827'],
-      geist: ['#1e1b4b', '#312e81']
+    const skies = {
+      feuer: ['#1c0505', '#7c2d12', '#f97316'],
+      wasser: ['#082f49', '#0369a1', '#7dd3fc'],
+      pflanze: ['#052e16', '#166534', '#86efac'],
+      blitz: ['#0f172a', '#334155', '#fde047'],
+      psycho: ['#1e1b4b', '#581c87', '#e9d5ff'],
+      kampf: ['#431407', '#9a3412', '#fdba74'],
+      drache: ['#1e1b4b', '#312e81', '#fbbf24'],
+      geist: ['#020617', '#312e81', '#cbd5e1']
     }[card.type];
-    svgEl('stop', { offset: '0%', 'stop-color': skyColors[0] }, sky);
-    svgEl('stop', { offset: '100%', 'stop-color': skyColors[1] }, sky);
-    svgEl('rect', { width: '240', height: '168', fill: 'url(#' + gid + ')' }, svg);
+    skies.forEach((color, index) => svgEl('stop', { offset: Math.round(index * 50) + '%', 'stop-color': color }, sky));
+    svgEl('rect', { width: 300, height: 190, fill: 'url(#' + gid + ')' }, svg);
     if (card.type === 'feuer') {
-      svgEl('polygon', { points: '20,150 90,48 150,150', fill: '#44403c' }, svg);
-      svgEl('polygon', { points: '70,150 130,70 190,150', fill: '#292524' }, svg);
-      svgEl('ellipse', { cx: '120', cy: '148', rx: '70', ry: '16', fill: '#ef4444' }, svg);
-      svgEl('ellipse', { cx: '120', cy: '146', rx: '40', ry: '8', fill: '#fde047' }, svg);
+      svgEl('path', { d: 'M0 150 L50 70 L80 95 L110 40 L135 75 L150 60 L190 150Z', fill: '#3b0a0a' }, svg);
+      svgEl('path', { d: 'M110 40 Q100 20 108 5 Q115 22 125 12 Q120 30 110 40Z', fill: '#fde047' }, svg);
+      svgEl('path', { d: 'M170 150 L230 80 L260 110 L300 70 L300 150Z', fill: '#450a0a' }, svg);
+      svgEl('path', { d: 'M0 162 Q80 142 150 160 T300 154 L300 190 L0 190Z', fill: '#ea580c' }, svg);
+      svgEl('path', { d: 'M0 174 Q70 160 140 174 T300 168', stroke: '#fef08a', 'stroke-width': 2, fill: 'none' }, svg);
     } else if (card.type === 'wasser') {
-      svgEl('path', { d: 'M0 110 Q 40 90 80 110 T 160 110 T 240 110 V 168 H 0 Z', fill: '#0369a1' }, svg);
-      svgEl('path', { d: 'M0 128 Q 50 112 100 128 T 200 128 T 280 128 V 168 H 0 Z', fill: '#0ea5e9' }, svg);
-      svgEl('circle', { cx: '40', cy: '40', r: '16', fill: '#fef9c3' }, svg);
+      svgEl('circle', { cx: 46, cy: 36, r: 16, fill: '#fef9c3' }, svg);
+      svgEl('path', { d: 'M0 120 Q70 96 140 122 T300 116 L300 190 L0 190Z', fill: '#075985' }, svg);
+      svgEl('path', { d: 'M0 146 Q80 128 160 148 T320 140 L320 190 L0 190Z', fill: '#0284c7' }, svg);
     } else if (card.type === 'pflanze') {
-      svgEl('circle', { cx: '190', cy: '36', r: '18', fill: '#fde047' }, svg);
-      svgEl('rect', { x: '0', y: '120', width: '240', height: '48', fill: '#166534' }, svg);
-      svgEl('polygon', { points: '30,120 52,62 74,120', fill: '#14532d' }, svg);
-      svgEl('polygon', { points: '150,120 178,48 206,120', fill: '#052e16' }, svg);
+      svgEl('circle', { cx: 250, cy: 36, r: 22, fill: '#fde047' }, svg);
+      svgEl('path', { d: 'M20 150 L48 70 L78 150Z', fill: '#14532d' }, svg);
+      svgEl('path', { d: 'M180 150 L214 48 L250 150Z', fill: '#052e16' }, svg);
+      svgEl('rect', { x: 0, y: 148, width: 300, height: 42, fill: '#166534' }, svg);
     } else if (card.type === 'blitz') {
-      svgEl('ellipse', { cx: '60', cy: '40', rx: '40', ry: '18', fill: '#334155' }, svg);
-      svgEl('ellipse', { cx: '120', cy: '34', rx: '50', ry: '20', fill: '#1e293b' }, svg);
-      svgEl('polygon', { points: '150,20 132,70 156,70 140,120', fill: '#fde047' }, svg);
-    } else if (card.type === 'psycho' || card.type === 'drache') {
-      for (let i = 0; i < 8; i++) {
-        const x = 16 + ((hash(card.id + i) % 210));
-        const y = 12 + ((hash(card.id + 's' + i) % 80));
-        svgEl('circle', { cx: x, cy: y, r: 1.2 + (i % 3), fill: '#fff' }, svg);
-      }
-      svgEl('ellipse', { cx: '120', cy: '70', rx: '70', ry: '28', fill: card.type === 'drache' ? 'rgba(251,191,36,.25)' : 'rgba(232,121,249,.35)' }, svg);
+      svgEl('ellipse', { cx: 70, cy: 42, rx: 48, ry: 18, fill: '#1e293b' }, svg);
+      svgEl('ellipse', { cx: 150, cy: 36, rx: 60, ry: 22, fill: '#0f172a' }, svg);
+      svgEl('polygon', { points: '188,18 164,78 196,74 170,140', fill: '#fde047' }, svg);
+      svgEl('rect', { x: 0, y: 150, width: 300, height: 40, fill: '#1f2937' }, svg);
     } else if (card.type === 'kampf') {
-      svgEl('circle', { cx: '180', cy: '40', r: '22', fill: '#fde047' }, svg);
-      svgEl('rect', { x: '0', y: '118', width: '240', height: '50', fill: '#78350f' }, svg);
+      svgEl('circle', { cx: 240, cy: 42, r: 26, fill: '#fde047' }, svg);
+      svgEl('path', { d: 'M0 120 L40 80 L90 120 L140 70 L190 120 L240 90 L300 120 L300 190 L0 190Z', fill: '#7c2d12' }, svg);
+      svgEl('rect', { x: 0, y: 150, width: 300, height: 40, fill: '#78350f' }, svg);
+    } else if (card.type === 'geist') {
+      svgEl('circle', { cx: 230, cy: 40, r: 26, fill: '#f8fafc' }, svg);
+      svgEl('ellipse', { cx: 80, cy: 150, rx: 90, ry: 22, fill: 'rgba(226,232,240,.28)' }, svg);
+      svgEl('ellipse', { cx: 190, cy: 162, rx: 80, ry: 16, fill: 'rgba(226,232,240,.22)' }, svg);
     } else {
-      svgEl('circle', { cx: '170', cy: '42', r: '22', fill: '#f8fafc' }, svg);
-      svgEl('ellipse', { cx: '80', cy: '120', rx: '70', ry: '18', fill: 'rgba(226,232,240,.35)' }, svg);
-      svgEl('ellipse', { cx: '150', cy: '132', rx: '60', ry: '14', fill: 'rgba(226,232,240,.25)' }, svg);
+      for (let i = 0; i < 10; i++) {
+        svgEl('circle', { cx: 20 + (hash(card.id + 's' + i) % 260), cy: 12 + (hash(card.id + 't' + i) % 90), r: 1.2, fill: '#fff' }, svg);
+      }
+      svgEl('ellipse', { cx: 160, cy: 70, rx: 90, ry: 28, fill: card.type === 'drache' ? 'rgba(251,191,36,.22)' : 'rgba(216,180,254,.28)' }, svg);
+      svgEl('path', { d: 'M0 150 L60 90 L120 140 L180 70 L240 130 L300 100 L300 190 L0 190Z', fill: '#1e1b4b' }, svg);
     }
-    if (card.rarity === 'mythic') {
-      for (let i = 0; i < 14; i++) {
-        svgEl('circle', {
-          cx: (hash(card.id + 'm' + i) % 230) + 5,
-          cy: (hash(card.id + 'n' + i) % 150) + 6,
-          r: 1 + (i % 2),
-          fill: i % 2 ? '#fde047' : '#fff'
-        }, svg);
+    if (card.rarity === 'mythic' || isHoloPlus(card.rarity)) {
+      for (let i = 0; i < 8; i++) {
+        svgEl('circle', { cx: 16 + (hash(card.id + 'p' + i) % 270), cy: 10 + (hash(card.id + 'q' + i) % 120), r: 1.1 + (i % 2), fill: '#fff' }, svg);
       }
     }
-    drawCreature(svg, card, card.alt ? 132 : 120, 92, card.rarity === 'mythic' ? 1.15 : 1);
+    drawBeast(svg, card, gid);
   }
 
-  function pip(type, small) {
+  function pip(type) {
     const node = document.createElement('i');
-    node.className = 'pip pip-' + type + (small ? ' pip-sm' : '');
-    node.title = TYPES[type] ? TYPES[type].name : 'Neutral';
-    node.textContent = type === 'neutral' ? '◆' : TYPES[type].name.slice(0, 1);
+    node.className = 'orb orb-' + (type || 'neutral');
+    node.textContent = type && type !== 'neutral' && TYPES[type] ? TYPES[type].name.slice(0, 1) : '';
     return node;
   }
 
   function attacksOf(card) {
     const names = ATK[card.type];
     const mainIndex = hash(card.id) % names.length;
-    const second = { name: names[mainIndex], damage: card.damage, cost: [card.type, card.type] };
-    if (card.stage <= 1 && card.rarity !== 'mythic') {
-      second.cost = [card.type];
-      return [second];
+    const strong = { name: names[mainIndex], damage: card.damage, cost: [card.type, card.type], effect: EFFECT[card.type] };
+    if ((card.stage || 1) <= 1 && card.rarity !== 'mythic') {
+      strong.cost = [card.type];
+      strong.effect = '';
+      return [strong];
     }
-    const first = {
-      name: names[(mainIndex + 2) % names.length],
-      damage: Math.max(10, card.damage - 35),
-      cost: [card.type]
+    const weak = { name: names[(mainIndex + 2) % names.length], damage: Math.max(20, Math.round(card.damage * 0.4)), cost: [card.type], effect: '' };
+    if ((card.stage || 1) >= 3 || card.rarity === 'mythic' || card.alt) strong.cost = [card.type, card.type, 'neutral'];
+    return [weak, strong];
+  }
+
+  function measures(card) {
+    const step = card.rarity === 'mythic' ? 4 : Math.min(3, card.stage || 1);
+    const sizes = [0.5, 0.9, 1.6, 2.4, 4.2];
+    const weights = [6, 24, 80, 190, 520];
+    const jitter = hash(card.id) % 5;
+    return {
+      size: String(sizes[step] + jitter / 20).replace('.', ','),
+      weight: weights[step] + jitter * 4
     };
-    if (card.stage >= 3 || card.rarity === 'mythic' || card.alt) second.cost = [card.type, card.type, 'neutral'];
-    return [first, second];
   }
 
   function flavor(card) {
-    const place = PLACE[card.type];
+    const place = { feuer: 'Vulkanen', wasser: 'Riffen', pflanze: 'Mooswäldern', blitz: 'Gewitterfeldern', psycho: 'Traumnebeln', kampf: 'Ringplätzen', drache: 'Drachenpässen', geist: 'Mondbrüchen' }[card.type];
     const lines = [
-      card.name + ' durchstreift das ' + place + '.',
-      'Im ' + place + ' erzählt man sich von ' + card.name + '.',
-      card.name + ' ruht nur, wenn der Wind dreht.'
+      card.name + ' schläft nur dort, wo das ' + SPECIES[card.type] + ' zu Hause ist.',
+      'Sein Ruf hallt durch die ' + place + ', lange bevor man es sieht.',
+      card.name + ' nährt sich an der Kraft der ' + place + '.'
     ];
-    return lines[hash(card.id) % lines.length];
+    return lines[hash(card.name) % lines.length];
   }
 
   function numberLine(card) {
     if (card.rarity === 'mythic') {
       const myths = SET.filter((entry) => entry.rarity === 'mythic');
-      const index = myths.indexOf(card) + 1;
-      return 'M' + String(index).padStart(2, '0') + '/' + String(myths.length).padStart(2, '0');
+      return 'M' + String(myths.indexOf(card) + 1).padStart(2, '0') + '/' + String(myths.length).padStart(2, '0');
     }
     return String(SET.indexOf(card) + 1).padStart(3, '0') + '/' + SET.length;
   }
 
-  function rarityMark(card) {
-    const stars = Math.min(RARITIES[card.rarity].rank, 5);
-    return '★'.repeat(Math.max(1, stars));
-  }
-
   function stageLabel(card) {
     if (card.rarity === 'mythic') return 'Mythisch';
-    if (card.alt) return 'Alternativ · Stufe 3';
+    if (card.alt) return 'Alternativ';
     return 'Stufe ' + card.stage;
   }
 
   function faceNode(card, count) {
     const root = document.createElement('article');
-    root.className = 'tc tc-full rarity-' + card.rarity + ' tc-tilt';
+    root.className = 'tc tc-legends rarity-' + card.rarity + ' tc-tilt';
     if (isHoloPlus(card.rarity)) root.classList.add('holo');
-    if (card.alt) root.classList.add('bleed');
-    if (RARITIES[card.rarity].rank >= 4) root.classList.add('foil-full');
+    if (card.alt) root.classList.add('alt-art');
     root.dataset.card = card.id;
-    const frame = document.createElement('div');
-    frame.className = 'tc-frame';
-
-    const bar = document.createElement('header');
-    bar.className = 'tc-namebar';
+    const inner = document.createElement('div');
+    inner.className = 'leg-inner type-' + card.type;
+    const pattern = document.createElement('div');
+    pattern.className = 'leg-pattern';
+    const hdr = document.createElement('header');
+    hdr.className = 'leg-hdr';
     const evo = document.createElement('div');
-    evo.className = 'tc-evo';
+    evo.className = 'leg-evo';
     if (card.evolvesFrom && BY_ID[card.evolvesFrom]) {
-      const mini = svgEl('svg', { viewBox: '0 0 80 64', class: 'evo-svg' });
-      svgEl('rect', { width: 80, height: 64, fill: TYPES[BY_ID[card.evolvesFrom].type].a }, mini);
-      drawCreature(mini, BY_ID[card.evolvesFrom], 40, 36, 0.42);
-      evo.appendChild(mini);
+      evo.textContent = BY_ID[card.evolvesFrom].emoji;
     }
-    const stage = document.createElement('span');
-    stage.textContent = stageLabel(card);
-    evo.appendChild(stage);
-    const name = document.createElement('b');
-    name.className = 'tc-name';
+    const titles = document.createElement('div');
+    const stage = document.createElement('div');
+    stage.className = 'leg-stage';
+    stage.textContent = stageLabel(card).toUpperCase();
+    const name = document.createElement('div');
+    name.className = 'leg-name';
     name.textContent = card.name;
+    titles.append(stage, name);
     const hp = document.createElement('div');
-    hp.className = 'tc-hp';
-    hp.append(document.createTextNode(card.hp + ' KP'), pip(card.type, true));
-    bar.append(evo, name, hp);
-
-    const window = document.createElement('div');
-    window.className = 'tc-window';
-    const scene = svgEl('svg', { viewBox: '0 0 240 168', class: 'tc-scene', preserveAspectRatio: 'xMidYMid slice' });
+    hp.className = 'leg-hp';
+    const hpNum = document.createElement('b');
+    hpNum.textContent = String(card.hp);
+    hp.append(document.createTextNode('KP '), hpNum, pip(card.type));
+    hdr.append(evo, titles, hp);
+    const art = document.createElement('div');
+    art.className = 'leg-art';
+    const scene = svgEl('svg', { viewBox: '0 0 300 190', preserveAspectRatio: 'xMidYMid slice' });
     drawScene(scene, card);
-    window.appendChild(scene);
-    const foil = document.createElement('div');
-    foil.className = 'tc-foil';
-    window.appendChild(foil);
-    if (RARITIES[card.rarity].rank >= 4) {
-      const sparks = document.createElement('div');
-      sparks.className = 'tc-sparks';
-      for (let i = 0; i < 6; i++) {
-        const dot = document.createElement('i');
-        dot.style.left = (10 + (hash(card.id + i) % 78)) + '%';
-        dot.style.top = (12 + (hash(card.id + 'y' + i) % 70)) + '%';
-        sparks.appendChild(dot);
-      }
-      window.appendChild(sparks);
+    art.appendChild(scene);
+    if (isHoloPlus(card.rarity)) {
+      const foil = document.createElement('div');
+      foil.className = 'leg-foil';
+      art.appendChild(foil);
     }
-
+    const info = document.createElement('div');
+    info.className = 'leg-info';
+    const size = measures(card);
+    info.textContent = SPECIES[card.type] + ' · Größe ' + size.size + ' m · Gewicht ' + size.weight + ' kg';
     const attacks = document.createElement('div');
-    attacks.className = 'tc-attacks';
+    let effect = '';
     attacksOf(card).forEach((attack) => {
       const row = document.createElement('div');
-      row.className = 'atk';
-      const costs = document.createElement('span');
-      costs.className = 'costs';
-      attack.cost.forEach((cost) => costs.appendChild(pip(cost, true)));
-      const label = document.createElement('span');
-      label.className = 'atk-name';
+      row.className = 'leg-atk';
+      const costs = document.createElement('div');
+      costs.className = 'leg-cost';
+      attack.cost.forEach((cost) => costs.appendChild(pip(cost)));
+      const label = document.createElement('div');
+      label.className = 'leg-an';
       label.textContent = attack.name;
-      const dmg = document.createElement('b');
+      const dmg = document.createElement('div');
+      dmg.className = 'leg-dmg';
       dmg.textContent = String(attack.damage);
       row.append(costs, label, dmg);
       attacks.appendChild(row);
+      if (attack.effect) effect = attack.effect;
     });
-
-    const flavorText = document.createElement('p');
-    flavorText.className = 'tc-flavor';
-    flavorText.textContent = flavor(card);
-
-    const stats = document.createElement('div');
-    stats.className = 'tc-battle';
-    [['Schwäche', WEAK[card.type]], ['Resistenz', RESIST[card.type]]].forEach((pair) => {
-      const cell = document.createElement('span');
-      cell.append(document.createTextNode(pair[0] + ' '), pip(pair[1], true));
-      stats.appendChild(cell);
+    const desc = document.createElement('div');
+    desc.className = 'leg-desc';
+    desc.textContent = effect;
+    const line = document.createElement('div');
+    line.className = 'leg-line';
+    const wrr = document.createElement('div');
+    wrr.className = 'leg-wrr';
+    [['Schwäche', WEAK[card.type], '×2'], ['Resistenz', RESIST[card.type], '−30']].forEach((part) => {
+      const cell = document.createElement('div');
+      cell.append(document.createTextNode(part[0] + ' '), pip(part[1]), document.createTextNode(part[2]));
+      wrr.appendChild(cell);
     });
-    const retreat = document.createElement('span');
+    const retreat = document.createElement('div');
     retreat.append(document.createTextNode('Rückzug '));
-    const retreatCost = card.rarity === 'mythic' ? 2 : Math.min(3, card.stage || 1);
-    for (let i = 0; i < retreatCost; i++) retreat.appendChild(pip('neutral', true));
-    stats.appendChild(retreat);
-
-    const meta = document.createElement('div');
-    meta.className = 'tc-foot';
+    const steps = card.rarity === 'mythic' ? 2 : Math.min(3, card.stage || 1);
+    for (let i = 0; i < steps; i++) retreat.appendChild(pip('neutral'));
+    wrr.appendChild(retreat);
+    const quote = document.createElement('div');
+    quote.className = 'leg-flavor';
+    quote.textContent = flavor(card);
+    const foot = document.createElement('div');
+    foot.className = 'leg-foot';
     const illus = document.createElement('span');
-    illus.textContent = 'Illus. ' + ILLUS[hash(card.id) % ILLUS.length];
+    illus.textContent = 'Illus. Lucky Studio';
+    const rar = document.createElement('span');
+    rar.className = 'leg-rar';
+    rar.textContent = '★ ' + RARITIES[card.rarity].name;
     const num = document.createElement('span');
-    num.textContent = numberLine(card) + ' ' + rarityMark(card) + (count > 1 ? ' ×' + count : '');
-    meta.append(illus, num);
-
-    frame.append(bar, window, attacks, flavorText, stats, meta);
-    if (RARITIES[card.rarity].rank >= 4) {
+    num.textContent = numberLine(card) + (count > 1 ? ' ×' + count : '');
+    foot.append(illus, rar, num);
+    inner.append(pattern, hdr, art, info, attacks, desc, line, wrr, quote, foot);
+    if (RARITIES[card.rarity].rank >= 6) {
       const glint = document.createElement('div');
-      glint.className = 'tc-glint';
-      frame.appendChild(glint);
+      glint.className = 'leg-glint';
+      inner.appendChild(glint);
     }
-    root.appendChild(frame);
+    root.appendChild(inner);
     bindTilt(root);
     return root;
   }
 
   function cardBack() {
     const wrap = document.createElement('div');
-    wrap.className = 'flip-back';
-    const gid = 'bg' + hash(String(Math.random())).toString(16);
-    const svg = svgEl('svg', { viewBox: '0 0 200 280', class: 'back-svg' });
-    const defs = svgEl('defs', null, svg);
-    const gold = svgEl('linearGradient', { id: gid, x1: '0', y1: '0', x2: '1', y2: '1' }, defs);
-    svgEl('stop', { offset: '0%', 'stop-color': '#fde68a' }, gold);
-    svgEl('stop', { offset: '50%', 'stop-color': '#b45309' }, gold);
-    svgEl('stop', { offset: '100%', 'stop-color': '#fde68a' }, gold);
-    svgEl('rect', { width: 200, height: 280, rx: 16, fill: '#14081f' }, svg);
-    svgEl('rect', { x: 8, y: 8, width: 184, height: 264, rx: 12, fill: 'none', stroke: 'url(#' + gid + ')', 'stroke-width': 4 }, svg);
-    svgEl('rect', { x: 16, y: 16, width: 168, height: 248, rx: 8, fill: 'none', stroke: '#7c2d12', 'stroke-width': 2 }, svg);
-    for (let y = 0; y < 6; y++) {
-      for (let x = 0; x < 4; x++) {
-        svgEl('rect', { x: 36 + x * 34, y: 40 + y * 34, width: 16, height: 16, transform: 'rotate(45 ' + (44 + x * 34) + ' ' + (48 + y * 34) + ')', fill: 'rgba(253,224,71,.16)' }, svg);
-      }
-    }
-    svgEl('circle', { cx: 100, cy: 132, r: 36, fill: 'none', stroke: 'url(#' + gid + ')', 'stroke-width': 4 }, svg);
-    svgEl('polygon', { points: '100,104 112,128 138,132 118,150 124,176 100,162 76,176 82,150 62,132 88,128', fill: '#fde047' }, svg);
-    const title = svgEl('text', { x: 100, y: 230, 'text-anchor': 'middle', fill: '#fde68a', 'font-size': 16, 'font-family': 'sans-serif' }, svg);
-    title.textContent = 'MONSTER';
-    wrap.appendChild(svg);
+    wrap.className = 'flip-back legends-back';
+    const stars = document.createElement('div');
+    stars.className = 'back-stars';
+    const ring = document.createElement('div');
+    ring.className = 'back-ring';
+    const core = document.createElement('div');
+    core.className = 'back-core';
+    core.append(document.createTextNode('MONSTER'), document.createElement('br'), document.createTextNode('LEGENDS'));
+    const small = document.createElement('small');
+    small.textContent = 'SAMMELKARTEN';
+    core.appendChild(small);
+    ring.appendChild(core);
+    wrap.append(stars, ring);
     return wrap;
   }
 
   function thumbArt(card, owned) {
     const svg = svgEl('svg', { viewBox: '0 0 80 56', class: 'thumb-svg' });
-    svgEl('rect', { width: 80, height: 56, rx: 8, fill: owned ? TYPES[card.type].a : '#1f1630' }, svg);
-    if (owned) drawCreature(svg, card, 40, 30, 0.48);
-    else {
+    svgEl('rect', { width: 80, height: 56, rx: 8, fill: owned ? PAINT[card.type].mid : '#1f1630' }, svg);
+    if (owned) {
+      const mark = svgEl('text', { x: 40, y: 36, 'text-anchor': 'middle', 'font-size': 22 }, svg);
+      mark.textContent = card.emoji;
+    } else {
       const mark = svgEl('text', { x: 40, y: 36, 'text-anchor': 'middle', fill: '#a89bb8', 'font-size': 22 }, svg);
       mark.textContent = '?';
     }
